@@ -33,12 +33,14 @@ class RestFormat
 	const HTML = 'text/html';
 	const AMF = 'applicaton/x-amf';
 	const JSON = 'application/json';
+	const XML = 'application/xml';
 	static public $formats = array(
 		'plain' => RestFormat::PLAIN,
 		'txt' => RestFormat::PLAIN,
 		'html' => RestFormat::HTML,
 		'amf' => RestFormat::AMF,
 		'json' => RestFormat::JSON,
+		'xml' => RestFormat::XML,
 	);
 }
 
@@ -404,6 +406,9 @@ class RestServer
 			$serializer = new Zend_Amf_Parse_Amf3_Serializer($stream);
 			$serializer->writeTypeMarker($data);
 			$data = $stream->getStream();
+		} elseif ($this->format == RestFormat::XML) {
+			$data  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
+			$data .= "<result>\n".$this->array2xml($data).'</result>';
 		} else {
 			if (is_object($data) && method_exists($data, '__keepOut')) {
 				$data = clone $data;
@@ -424,6 +429,29 @@ class RestServer
 	{
 		$code .= ' ' . $this->codes[strval($code)];
 		header("{$_SERVER['SERVER_PROTOCOL']} $code");
+	}
+	
+	public function array2xml(array $data, $pretty = false, $indention = 1)
+	{
+        foreach ($data as $key=>$value) {
+			$key = (is_numeric($key)) ? 'item' : $key;
+
+			$tab = ''; $newline = '';
+			if ($pretty) {
+				for ($i=0; $i < $indention; $i++) { 
+					$tab .= "\t";
+				}
+				$newline = "\n";
+			}
+			
+            if (is_array($value)) {
+                $xml.="$tab<$key>$newline".$this->array2xml($value, $pretty, ++$indention)."$tab</$key>$newline";
+				$indention--;
+            } else { 
+                $xml.="$tab<$key>".$value."</$key>$newline"; 
+            } 
+        } 
+        return $xml;
 	}
 	
 	// Pretty print some JSON
