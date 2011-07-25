@@ -398,6 +398,8 @@ class RestServer
 		header("Cache-Control: no-cache, must-revalidate");
 		header("Expires: 0");
 		header('Content-Type: ' . $this->format);
+		
+		$elements = count($data);
 
 		if ($this->format == RestFormat::AMF) {
 			require_once 'Zend/Amf/Parse/OutputStream.php';
@@ -407,8 +409,10 @@ class RestServer
 			$serializer->writeTypeMarker($data);
 			$data = $stream->getStream();
 		} elseif ($this->format == RestFormat::XML) {
-			$data  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-			$data .= "<result>\n".$this->array2xml($data).'</result>';
+			$output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
+			$output .= "<result>".$this->array2xml($data).'</result>';
+			$data = $output;
+			unset($output);
 		} else {
 			if (is_object($data) && method_exists($data, '__keepOut')) {
 				$data = clone $data;
@@ -421,8 +425,27 @@ class RestServer
 				$data = $this->json_format($data);
 			}
 		}
-
-		echo $data;
+		
+		if ($this->mode == 'debug' && $this->getFormat() == RestFormat::HTML && is_readable('RestServer/geshi.php')) {
+			require_once 'RestServer/geshi.php';
+			$geshi = new GeSHi($data, 'javascript');
+			// $geshi->set_header_type(GESHI_HEADER_PRE_VALID);
+			$geshi->enable_classes();
+			// $geshi->enable_line_numbers(GESHI_FANCY_LINE_NUMBERS, 5);
+			// $geshi->set_line_style('color: #003030;', 'font-weight: bold; color: #006060;', true);
+			// 		    $geshi->set_code_style('color: #000020;', true);
+			// 		    $geshi->set_link_styles(GESHI_LINK, 'color: #000060;');
+			// 		    $geshi->set_link_styles(GESHI_HOVER, 'background-color: #f0f000;');
+			
+			$stylesheet = $geshi->get_stylesheet(true);
+			$pretty_output = $geshi->parse_code();
+			$title = $this->getFormat().": ".$this->getPath();
+			
+			echo "<html><head><title>(${elements}) ${title}</title><style type=\"text/css\"><!--\n${stylesheet}//--></style></head><body>${pretty_output}</body></html>";
+			unset($geshi);
+		} else {
+			echo $data;
+		}
 	}
 
 	public function setStatus($code)
@@ -434,8 +457,9 @@ class RestServer
 	public function array2xml(array $data, $pretty = false, $indention = 1)
 	{
         foreach ($data as $key=>$value) {
-			$key = (is_numeric($key)) ? 'item' : $key;
+			$tag = (is_numeric($key)) ? 'item' : $key;
 
+			// Make it pretty
 			$tab = ''; $newline = '';
 			if ($pretty) {
 				for ($i=0; $i < $indention; $i++) { 
@@ -445,10 +469,10 @@ class RestServer
 			}
 			
             if (is_array($value)) {
-                $xml.="$tab<$key>$newline".$this->array2xml($value, $pretty, ++$indention)."$tab</$key>$newline";
+                $xml.="$tab<$tag index=\"".$key."\">$newline".$this->array2xml($value, $pretty, ++$indention)."$tab</$tag>$newline";
 				$indention--;
             } else { 
-                $xml.="$tab<$key>".$value."</$key>$newline"; 
+                $xml.="$tab<$tag>".$value."</$tag>$newline"; 
             } 
         } 
         return $xml;
