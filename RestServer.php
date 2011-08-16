@@ -472,7 +472,7 @@ class RestServer
 					}
 					break;
 				case '"':
-					if($c > 0 && $json[$c-1] != '\\') {
+					if(($c > 0 && $json[$c-1] != '\\') || $c == 0 ) {
 						$in_string = !$in_string;
 					}
 				default:
