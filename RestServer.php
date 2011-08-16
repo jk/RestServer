@@ -131,13 +131,20 @@ class RestServer
 					$obj->init();
 				}
 				
-				if (!$noAuth && method_exists($obj, 'authorize')) {
-					if (!$obj->authorize()) {
-						$this->sendData($this->unauthorized(true));
-						exit;
+				if (!$noAuth) {
+					if (method_exists($this, 'doServerWideAuthorization')) {
+						if (!$this->doServerWideAuthorization($obj)) {
+							exit; // stop here to prevent unauthorized access to any output
+						}
+					} elseif (method_exists($obj, 'authorize')) {
+						// Standard behaviour
+						if (!$obj->authorize()) {
+							$this->sendData($this->unauthorized($ask));
+							exit;
+						}
 					}
 				}
-				
+
 				$result = call_user_func_array(array($obj, $method), $params);
 			} catch (RestException $e) {
 				$this->handleError($e->getCode(), $e->getMessage());
