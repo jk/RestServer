@@ -113,7 +113,7 @@ class RestServer
 			$this->data = $this->getData();
 		}
 		
-		list($obj, $method, $params, $this->params, $noAuth) = $this->findUrl();
+		list($obj, $method, $params, $this->params, $keys) = $this->findUrl();		
 		
 		if ($obj) {
 			if (is_string($obj)) {
@@ -131,9 +131,9 @@ class RestServer
 					$obj->init();
 				}
 				
-				if (!$noAuth) {
+				if (!$keys['noAuth']) {
 					if (method_exists($this, 'doServerWideAuthorization')) {
-						if (!$this->doServerWideAuthorization($obj)) {
+						if (!$this->doServerWideAuthorization()) {
 							exit; // stop here to prevent unauthorized access to any output
 						}
 					} elseif (method_exists($obj, 'authorize')) {
@@ -301,7 +301,6 @@ class RestServer
 		
 		foreach ($methods as $method) {
 			$doc = $method->getDocComment();
-			$noAuth = strpos($doc, '@noAuth') !== false;
 			if (preg_match_all('/@url[ \t]+(GET|POST|PUT|DELETE|HEAD|OPTIONS)[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
 				
 				$params = $method->getParameters();
@@ -319,12 +318,33 @@ class RestServer
 					}
 					$call[] = $args;
 					$call[] = null;
-					$call[] = $noAuth;
+					$call[] = $this->evaluateDocKeys($doc);
 					
 					$this->map[$httpMethod][$url] = $call;
 				}
 			}
 		}
+	}
+	
+	private function evaluateDocKeys($doc)
+	{
+		$keysAsArray = array('url');
+		if (preg_match_all('/@(\w+)([ \t](.*?))?\n/', $doc, $matches, PREG_SET_ORDER)) {
+			$keys = array();
+			foreach ($matches as $match) {
+				if (in_array($match[1], $keysAsArray)) {
+					$keys[$match[1]][] = $match[3];
+				} else {
+					if (!isset($match[2])) {
+						$keys[$match[1]] = true;
+					} else {
+						$keys[$match[1]] = $match[3];
+					}
+				}
+			}
+			return $keys;
+		}
+		return false;
 	}
 
 	public function getPath()
