@@ -31,7 +31,7 @@ class RestFormat
 
 	const PLAIN = 'text/plain';
 	const HTML = 'text/html';
-	const AMF = 'applicaton/x-amf';
+	const AMF = 'application/x-amf';
 	const JSON = 'application/json';
 	static public $formats = array(
 		'plain' => RestFormat::PLAIN,
