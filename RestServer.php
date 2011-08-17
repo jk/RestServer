@@ -33,12 +33,14 @@ class RestFormat
 	const HTML = 'text/html';
 	const AMF = 'application/x-amf';
 	const JSON = 'application/json';
+	const JSONP = 'application/json-p';
 	static public $formats = array(
 		'plain' => RestFormat::PLAIN,
 		'txt' => RestFormat::PLAIN,
 		'html' => RestFormat::HTML,
 		'amf' => RestFormat::AMF,
 		'json' => RestFormat::JSON,
+		'jsonp' => RestFormat::JSONP,
 	);
 }
 
@@ -357,7 +359,7 @@ class RestServer
 		}
 		
 		// Check for trailing dot-format syntax like /controller/action.format -> action.json
-		if(preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], &$matches)) {
+		if(preg_match('/\.(\w+)$/i', $_SERVER['REQUEST_URI'], &$matches)) {
 			$override = $matches[1];
 		}
 
@@ -369,6 +371,8 @@ class RestServer
 			$format = RestFormat::AMF;
 		} elseif (in_array(RestFormat::JSON, $accept)) {
 			$format = RestFormat::JSON;
+		} elseif (in_array(RestFormat::JSONP, $accept)) {
+			$format = RestFormat::JSONP;
 		}
 		return $format;
 	}
@@ -415,6 +419,13 @@ class RestServer
 			if ($data && $this->mode == 'debug') {
 				$data = $this->json_format($data);
 			}
+                        if ($this->format == RestFormat::JSONP) {
+                          if (array_key_exists('callback', $_GET) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback']) == 1) {
+                                        $data = $_GET['callback'] . '(' . $data . ')';
+                                } else {
+                                        $this->handleError(400);
+                                }
+                        }
 		}
 
 		echo $data;
