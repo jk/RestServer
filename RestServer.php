@@ -481,7 +481,44 @@ class RestServer
 		header("{$_SERVER['SERVER_PROTOCOL']} $code");
 	}
 	
-	public function array2xml(array $data, $pretty = false, $indention = 1)
+	/**
+	 * Set an URL prefix
+	 *
+	 * You can set the root to achive something like a base directory, so
+	 * you don't have to prepand that directory prefix on every addClass
+	 * class.
+	 *
+	 * @access public
+	 * @param string $root URL prefix you type into your browser
+	 * @return void
+	 */
+	public function setRoot($root)
+	{
+		// do nothing if root isn't a valid prefix
+		if (empty($root)) {
+			break;
+		}
+
+		// Kill slash padding and add a trailing slash afterwards
+		$root = trim($root, '/');
+		$root .= '/';
+		$this->root = $root;
+	}
+
+	/**
+	 * Auxiliary method to help converting a PHP array into a XML representation.
+	 *
+	 * This XML representation is one of various posible representation. If
+	 * you want to alter the XML representation you should subclass RestServer
+	 * and implement array2xml by yourself.
+	 *
+	 * @access protected
+	 * @param array $data PHP array
+	 * @param bool $pretty If set, the output have line breaks and proper indention
+	 * @param string $indention Don't set this by yourself, it's for recrusive calls
+	 * @return string XML representation
+	 */
+	protected function array2xml(array $data, $pretty = false, $indention = 1)
 	{
         foreach ($data as $key=>$value) {
 			$tag = (is_numeric($key)) ? 'item' : $key;
