@@ -83,7 +83,7 @@ class RestServer
 			if (function_exists('apc_store')) {
 				apc_store('urlMap', $this->map);
 			} else {
-				file_put_contents($this->cacheDir . '/urlMap.cache', serialize($this->map));
+				file_put_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache', serialize($this->map));
 			}
 		}
 	}
@@ -220,8 +220,8 @@ class RestServer
 		if ($this->mode == 'production') {
 			if (function_exists('apc_fetch')) {
 				$map = apc_fetch('urlMap');
-			} elseif (file_exists($this->cacheDir . '/urlMap.cache')) {
-				$map = unserialize(file_get_contents($this->cacheDir . '/urlMap.cache'));
+			} elseif (file_exists($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache')) {
+				$map = unserialize(file_get_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache'));
 			}
 			if ($map && is_array($map)) {
 				$this->map = $map;
@@ -231,7 +231,7 @@ class RestServer
 			if (function_exists('apc_delete')) {
 				apc_delete('urlMap');
 			} else {
-				@unlink($this->cacheDir . '/urlMap.cache');
+				@unlink($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache');
 			}
 		}
 	}
