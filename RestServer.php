@@ -58,7 +58,7 @@ class RestServer
 	public $cacheDir = '.';
 	public $realm;
 	public $mode;
-	public $root;
+	protected $root;
 	
 	protected $map = array();
 	protected $errorClasses = array();
@@ -73,8 +73,7 @@ class RestServer
 	{
 		$this->mode = $mode;
 		$this->realm = $realm;
-		$dir = dirname(str_replace($_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']));
-		$this->root = ($dir == '.' ? '' : $dir . '/');
+		$this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 	}
 	
 	public function  __destruct()
@@ -169,10 +168,14 @@ class RestServer
 				throw new Exception('Invalid method or class; must be a classname or object');
 			}
 			
-			if (substr($basePath, 0, 1) == '/') {
-				$basePath = substr($basePath, 1);
-			}
-			if ($basePath && substr($basePath, -1) != '/') {
+			// Prefix basePath with root (if it's null, that's not a problem)
+			// $basePath = $this->root . ltrim($basePath, '/');
+			
+			// Kill the leading slash
+			$basePath = ltrim($basePath, '/');
+			
+			// Add a trailing slash
+			if (substr($basePath, -1) != '/') {
 				$basePath .= '/';
 			}
 
@@ -307,7 +310,7 @@ class RestServer
 				
 				foreach ($matches as $match) {
 					$httpMethod = $match[1];
-					$url = $basePath . $match[2];
+					$url = $this->root . $basePath . $match[2];
 					if ($url && $url[strlen($url) - 1] == '/') {
 						$url = substr($url, 0, -1);
 					}
@@ -354,7 +357,8 @@ class RestServer
 			$path = substr($path, 0, -1);
 		}
 		// remove root from path
-		if ($this->root) $path = str_replace($this->root, '', $path);
+		// if ($this->root) $path = str_replace($this->root, '', $path);
+		
 		// remove trailing format definition, like /controller/action.json -> /controller/action
 		$path = preg_replace('/\.(\w+)$/i', '', $path);
 		return $path;
@@ -483,7 +487,7 @@ class RestServer
 	
 	/**
 	 * Set an URL prefix
-	 *
+	 * 
 	 * You can set the root to achive something like a base directory, so
 	 * you don't have to prepand that directory prefix on every addClass
 	 * class.
@@ -498,16 +502,16 @@ class RestServer
 		if (empty($root)) {
 			break;
 		}
-
+		
 		// Kill slash padding and add a trailing slash afterwards
 		$root = trim($root, '/');
 		$root .= '/';
 		$this->root = $root;
 	}
-
+	
 	/**
 	 * Auxiliary method to help converting a PHP array into a XML representation.
-	 *
+	 * 
 	 * This XML representation is one of various posible representation. If
 	 * you want to alter the XML representation you should subclass RestServer
 	 * and implement array2xml by yourself.
