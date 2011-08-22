@@ -73,7 +73,7 @@ class RestServer
 	{
 		$this->mode = $mode;
 		$this->realm = $realm;
-		$this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+		$this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']) . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
 	}
 	
 	public function  __destruct()
