@@ -132,7 +132,7 @@ class RestServer
 					$obj->init();
 				}
 				
-				if (!$keys['noAuth']) {
+				if (empty($keys['noAuth'])) {
 					if (method_exists($this, 'doServerWideAuthorization')) {
 						if (!$this->doServerWideAuthorization()) {
 							exit; // stop here to prevent unauthorized access to any output
