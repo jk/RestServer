@@ -34,6 +34,7 @@ class RestFormat
 	const AMF = 'application/x-amf';
 	const JSON = 'application/json';
 	const JSONP = 'application/json-p';
+	const XML = 'application/xml';
 	static public $formats = array(
 		'plain' => RestFormat::PLAIN,
 		'txt' => RestFormat::PLAIN,
@@ -41,6 +42,7 @@ class RestFormat
 		'amf' => RestFormat::AMF,
 		'json' => RestFormat::JSON,
 		'jsonp' => RestFormat::JSONP,
+		'xml' => RestFormat::XML,
 	);
 }
 
@@ -360,7 +362,7 @@ class RestServer
 		}
 		
 		// Check for trailing dot-format syntax like /controller/action.format -> action.json
-		if(preg_match('/\.(\w+)$/i', $_SERVER['REQUEST_URI'], &$matches)) {
+		if(preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], &$matches)) {
 			$override = $matches[1];
 		}
 
@@ -374,6 +376,10 @@ class RestServer
 			$format = RestFormat::JSON;
 		} elseif (in_array(RestFormat::JSONP, $accept)) {
 			$format = RestFormat::JSONP;
+		} elseif (in_array(RestFormat::HTML, $accept)) {
+			$format = RestFormat::HTML;
+		} elseif (in_array(RestFormat::PLAIN, $accept)) {
+			$format = RestFormat::PLAIN;
 		}
 		return $format;
 	}
@@ -401,7 +407,7 @@ class RestServer
 		header("Cache-Control: no-cache, must-revalidate");
 		header("Expires: 0");
 		header('Content-Type: ' . $this->format);
-
+		
 		if ($this->format == RestFormat::AMF) {
 			require_once 'Zend/Amf/Parse/OutputStream.php';
 			require_once 'Zend/Amf/Parse/Amf3/Serializer.php';
@@ -409,6 +415,11 @@ class RestServer
 			$serializer = new Zend_Amf_Parse_Amf3_Serializer($stream);
 			$serializer->writeTypeMarker($data);
 			$data = $stream->getStream();
+		} elseif ($this->format == RestFormat::XML) {
+			$output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
+			$output .= "<result>".$this->array2xml($data).'</result>';
+			$data = $output;
+			unset($output);
 		} else {
 			if (is_object($data) && method_exists($data, '__keepOut')) {
 				$data = clone $data;
@@ -429,14 +440,52 @@ class RestServer
 				}
 			}
 		}
+		
+		if ($this->mode == 'debug' && $this->getFormat() == RestFormat::HTML && is_readable('RestServer/geshi.php')) {
+			require_once 'RestServer/geshi.php';
+			$geshi = new GeSHi($data, 'javascript');
+			$geshi->enable_classes();
 
-		echo $data;
+			$stylesheet = $geshi->get_stylesheet(true);
+			$pretty_output = $geshi->parse_code();
+			$title = $this->getFormat().": ".$this->getPath();
+			
+			echo "<html><head><title>${title}</title><style type=\"text/css\"><!--\n${stylesheet}//--></style></head><body>${pretty_output}</body></html>";
+			unset($geshi);
+		} else {
+			echo $data;
+		}
 	}
 
 	public function setStatus($code)
 	{
 		$code .= ' ' . $this->codes[strval($code)];
 		header("{$_SERVER['SERVER_PROTOCOL']} $code");
+	}
+	
+	public function array2xml(array $data, $pretty = false, $indention = 1)
+	{
+        foreach ($data as $key=>$value) {
+			$tag = (is_numeric($key)) ? 'item' : $key;
+
+			// Make it pretty
+			$tab = ''; $newline = '';
+			if ($pretty) {
+				for ($i=0; $i < $indention; $i++) { 
+					$tab .= "\t";
+				}
+				$newline = "\n";
+			}
+			
+			$xml = (!empty($xml)) ? $xml : '';
+            if (is_array($value)) {
+                $xml.="$tab<$tag index=\"".$key."\">$newline".$this->array2xml($value, $pretty, ++$indention)."$tab</$tag>$newline";
+				$indention--;
+            } else { 
+                $xml.="$tab<$tag>".$value."</$tag>$newline"; 
+            } 
+        } 
+        return $xml;
 	}
 	
 	// Pretty print some JSON
