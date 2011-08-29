@@ -60,7 +60,7 @@ class RestServer
 	public $cacheDir = '.';
 	public $realm;
 	public $mode;
-	public $root;
+	protected $root;
 	
 	protected $map = array();
 	protected $errorClasses = array();
@@ -75,8 +75,7 @@ class RestServer
 	{
 		$this->mode = $mode;
 		$this->realm = $realm;
-		$dir = dirname(str_replace($_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']));
-		$this->root = ($dir == '.' ? '' : $dir . '/');
+		$this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']) . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
 	}
 	
 	public function  __destruct()
@@ -85,7 +84,7 @@ class RestServer
 			if (function_exists('apc_store')) {
 				apc_store('urlMap', $this->map);
 			} else {
-				file_put_contents($this->cacheDir . '/urlMap.cache', serialize($this->map));
+				file_put_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache', serialize($this->map));
 			}
 		}
 	}
@@ -115,7 +114,7 @@ class RestServer
 			$this->data = $this->getData();
 		}
 		
-		list($obj, $method, $params, $this->params, $noAuth) = $this->findUrl();
+		list($obj, $method, $params, $this->params, $keys) = $this->findUrl();		
 		
 		if ($obj) {
 			if (is_string($obj)) {
@@ -133,13 +132,20 @@ class RestServer
 					$obj->init();
 				}
 				
-				if (!$noAuth && method_exists($obj, 'authorize')) {
-					if (!$obj->authorize()) {
-						$this->sendData($this->unauthorized(true));
-						exit;
+				if (!$keys['noAuth']) {
+					if (method_exists($this, 'doServerWideAuthorization')) {
+						if (!$this->doServerWideAuthorization()) {
+							exit; // stop here to prevent unauthorized access to any output
+						}
+					} elseif (method_exists($obj, 'authorize')) {
+						// Standard behaviour
+						if (!$obj->authorize()) {
+							$this->sendData($this->unauthorized($ask));
+							exit;
+						}
 					}
 				}
-				
+
 				$result = call_user_func_array(array($obj, $method), $params);
 			} catch (RestException $e) {
 				$this->handleError($e->getCode(), $e->getMessage());
@@ -164,10 +170,14 @@ class RestServer
 				throw new Exception('Invalid method or class; must be a classname or object');
 			}
 			
-			if (substr($basePath, 0, 1) == '/') {
-				$basePath = substr($basePath, 1);
-			}
-			if ($basePath && substr($basePath, -1) != '/') {
+			// Prefix basePath with root (if it's null, that's not a problem)
+			// $basePath = $this->root . ltrim($basePath, '/');
+			
+			// Kill the leading slash
+			$basePath = ltrim($basePath, '/');
+			
+			// Add a trailing slash
+			if (substr($basePath, -1) != '/') {
 				$basePath .= '/';
 			}
 
@@ -215,8 +225,8 @@ class RestServer
 		if ($this->mode == 'production') {
 			if (function_exists('apc_fetch')) {
 				$map = apc_fetch('urlMap');
-			} elseif (file_exists($this->cacheDir . '/urlMap.cache')) {
-				$map = unserialize(file_get_contents($this->cacheDir . '/urlMap.cache'));
+			} elseif (file_exists($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache')) {
+				$map = unserialize(file_get_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache'));
 			}
 			if ($map && is_array($map)) {
 				$this->map = $map;
@@ -226,7 +236,7 @@ class RestServer
 			if (function_exists('apc_delete')) {
 				apc_delete('urlMap');
 			} else {
-				@unlink($this->cacheDir . '/urlMap.cache');
+				@unlink($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache');
 			}
 		}
 	}
@@ -296,14 +306,13 @@ class RestServer
 		
 		foreach ($methods as $method) {
 			$doc = $method->getDocComment();
-			$noAuth = strpos($doc, '@noAuth') !== false;
 			if (preg_match_all('/@url[ \t]+(GET|POST|PUT|DELETE|HEAD|OPTIONS)[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
 				
 				$params = $method->getParameters();
 				
 				foreach ($matches as $match) {
 					$httpMethod = $match[1];
-					$url = $basePath . $match[2];
+					$url = $this->root . $basePath . $match[2];
 					if ($url && $url[strlen($url) - 1] == '/') {
 						$url = substr($url, 0, -1);
 					}
@@ -314,12 +323,33 @@ class RestServer
 					}
 					$call[] = $args;
 					$call[] = null;
-					$call[] = $noAuth;
+					$call[] = $this->evaluateDocKeys($doc);
 					
 					$this->map[$httpMethod][$url] = $call;
 				}
 			}
 		}
+	}
+	
+	private function evaluateDocKeys($doc)
+	{
+		$keysAsArray = array('url');
+		if (preg_match_all('/@(\w+)([ \t](.*?))?\n/', $doc, $matches, PREG_SET_ORDER)) {
+			$keys = array();
+			foreach ($matches as $match) {
+				if (in_array($match[1], $keysAsArray)) {
+					$keys[$match[1]][] = $match[3];
+				} else {
+					if (!isset($match[2])) {
+						$keys[$match[1]] = true;
+					} else {
+						$keys[$match[1]] = $match[3];
+					}
+				}
+			}
+			return $keys;
+		}
+		return false;
 	}
 
 	public function getPath()
@@ -329,7 +359,8 @@ class RestServer
 			$path = substr($path, 0, -1);
 		}
 		// remove root from path
-		if ($this->root) $path = str_replace($this->root, '', $path);
+		// if ($this->root) $path = str_replace($this->root, '', $path);
+		
 		// remove trailing format definition, like /controller/action.json -> /controller/action
 		$path = preg_replace('/\.(\w+)$/i', '', $path);
 		return $path;
@@ -463,7 +494,44 @@ class RestServer
 		header("{$_SERVER['SERVER_PROTOCOL']} $code");
 	}
 	
-	public function array2xml(array $data, $pretty = false, $indention = 1)
+	/**
+	 * Set an URL prefix
+	 * 
+	 * You can set the root to achive something like a base directory, so
+	 * you don't have to prepand that directory prefix on every addClass
+	 * class.
+	 *
+	 * @access public
+	 * @param string $root URL prefix you type into your browser
+	 * @return void
+	 */
+	public function setRoot($root)
+	{
+		// do nothing if root isn't a valid prefix
+		if (empty($root)) {
+			break;
+		}
+		
+		// Kill slash padding and add a trailing slash afterwards
+		$root = trim($root, '/');
+		$root .= '/';
+		$this->root = $root;
+	}
+	
+	/**
+	 * Auxiliary method to help converting a PHP array into a XML representation.
+	 * 
+	 * This XML representation is one of various posible representation. If
+	 * you want to alter the XML representation you should subclass RestServer
+	 * and implement array2xml by yourself.
+	 *
+	 * @access protected
+	 * @param array $data PHP array
+	 * @param bool $pretty If set, the output have line breaks and proper indention
+	 * @param string $indention Don't set this by yourself, it's for recrusive calls
+	 * @return string XML representation
+	 */
+	protected function array2xml(array $data, $pretty = false, $indention = 1)
 	{
         foreach ($data as $key=>$value) {
 			$tag = (is_numeric($key)) ? 'item' : $key;
