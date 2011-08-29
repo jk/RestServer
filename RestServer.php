@@ -419,13 +419,14 @@ class RestServer
 			if ($data && $this->mode == 'debug') {
 				$data = $this->json_format($data);
 			}
-                        if ($this->format == RestFormat::JSONP) {
-                          if (array_key_exists('callback', $_GET) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback']) == 1) {
-                                        $data = $_GET['callback'] . '(' . $data . ')';
-                                } else {
-                                        $this->handleError(400);
-                                }
-                        }
+
+			if ($this->format == RestFormat::JSONP) {
+				if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
+					$data = $_GET['callback'] . '(' . $data . ')';
+				} else {
+					throw new RestException(400, 'No callback given.');
+				}
+			}
 		}
 
 		echo $data;
