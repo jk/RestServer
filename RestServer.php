@@ -110,7 +110,7 @@ class RestServer
 		$this->method = $this->getMethod();
 		$this->format = $this->getFormat();
 		
-		if ($this->method == 'PUT' || $this->method == 'POST') {
+		if ($this->method == 'PUT' || $this->method == 'POST' || $this->method == 'GET') {
 			$this->data = $this->getData();
 		}
 		
