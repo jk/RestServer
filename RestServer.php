@@ -243,6 +243,7 @@ class RestServer
 	
 	protected function findUrl()
 	{
+		if (count($this->map) == 0) return null;
 		$urls = $this->map[$this->method];
 		if (!$urls) return null;
 		
@@ -393,7 +394,7 @@ class RestServer
 		}
 		
 		// Check for trailing dot-format syntax like /controller/action.format -> action.json
-		if(preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], &$matches)) {
+		if(preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
 			$override = $matches[1];
 		}
 
