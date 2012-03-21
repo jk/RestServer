@@ -472,9 +472,9 @@ class RestServer
 				}
 			}
 		}
-		
-		if ($this->mode == 'debug' && $this->getFormat() == RestFormat::HTML && is_readable('RestServer/geshi.php')) {
-			require_once 'RestServer/geshi.php';
+
+		if ($this->mode == 'debug' && $this->getFormat() == RestFormat::HTML && is_readable(__DIR__.'/geshi.php')) {
+			require_once 'geshi.php';
 			$geshi = new GeSHi($data, 'javascript');
 			$geshi->enable_classes();
 
