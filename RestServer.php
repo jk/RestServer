@@ -420,7 +420,7 @@ class RestServer
 	{
 		$data = file_get_contents('php://input');
 		
-		if ($_SERVER['CONTENT_TYPE'] == 'application/x-www-form-urlencoded') {
+		if (isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/x-www-form-urlencoded') {
 			$a = explode('&', $data);
 			$output = array();
 			foreach ($a as $entry) {
