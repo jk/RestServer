@@ -420,14 +420,17 @@ class RestServer
 	{
 		$data = file_get_contents('php://input');
 		
-		if (isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/x-www-form-urlencoded') {
-			$a = explode('&', $data);
-			$output = array();
-			foreach ($a as $entry) {
-				$tmp = split('=', $entry);
-				$output[urldecode($tmp[0])] = urldecode($tmp[1]);
+		if (isset($_SERVER['CONTENT_TYPE'])) {
+			$components = preg_split('/\;\s*/', $_SERVER['CONTENT_TYPE']);
+			if (in_array('application/x-www-form-urlencoded', $components)) {
+				$a = explode('&', $data);
+				$output = array();
+				foreach ($a as $entry) {
+					$tmp = explode('=', $entry);
+					$output[urldecode($tmp[0])] = urldecode($tmp[1]);
+				}
+				return $output;
 			}
-			return $output;
 		} else if ($this->format == RestFormat::AMF) {
 			require_once 'Zend/Amf/Parse/InputStream.php';
 			require_once 'Zend/Amf/Parse/Amf3/Deserializer.php';
