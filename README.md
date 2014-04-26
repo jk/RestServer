@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/jk/restserver.png?label=ready&title=Ready)](http://waffle.io/jk/restserver)
 # RestServer.php
 | Master branch | Develop branch |
 | :---: | :---: |
