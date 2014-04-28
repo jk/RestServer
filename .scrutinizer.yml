@@ -1,0 +1,6 @@
+imports:
+    - php
+    
+tools:
+    php_sim: true
+    php_cpd: false
