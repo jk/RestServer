@@ -1,0 +1,36 @@
+{
+    "name": "jk/restserver",
+	"type": "library",
+    "description": "A PHP REST server for providing a very light-weight REST API without aweful routing configuration",
+    "require": {
+        "php": ">= 5.3.0",
+		"ext-json": "*",
+		"ext-pcre": "*",
+		"ext-reflection": "*"
+    },
+	"suggest" : {
+		"ext-simplexml": "*"
+	},
+    "keyword": [
+        "web service",
+		"rest",
+		"restful",
+		"light weight",
+		"server",
+		"api"
+    ],
+	"homepage": "https://github.com/jk/RestServer",
+	"license": "MIT",
+    "authors": [
+        {
+            "name": "Jens Kohl",
+            "email": "jens.kohl@gmail.de",
+            "role": "Lead",
+			"homepage": "https://github.com/jk"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/jk/restserver/issues",
+        "wiki": "https://github.com/jk/restserver/wiki"
+    }
+}
