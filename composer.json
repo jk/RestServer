@@ -6,7 +6,8 @@
         "php": ">= 5.3.0",
 		"ext-json": "*",
 		"ext-pcre": "*",
-		"ext-reflection": "*"
+		"ext-reflection": "*",
+		"ext-spl": "*"
     },
 	"suggest" : {
 		"ext-simplexml": "*"
@@ -19,6 +20,12 @@
 		"server",
 		"api"
     ],
+	"autoload": {
+		"psr-4": {
+			"JK\\RestServer\\": "src/",
+			"JK\\RestServer\\": "tests/"
+		}
+	},
 	"homepage": "https://github.com/jk/RestServer",
 	"license": "MIT",
     "authors": [
