@@ -3,7 +3,8 @@ imports:
 
 filter:
     excluded_paths:
-        - 'geschi/*'
+        - 'geshi/*'
+		- 'geshi.php'
     
 tools:
     php_sim: true
