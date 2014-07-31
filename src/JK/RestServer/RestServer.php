@@ -25,6 +25,12 @@
 
 namespace JK\RestServer;
 
+use Exception;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionObject;
+
+
 /**
  * Description of RestServer
  *
@@ -120,7 +126,7 @@ class RestServer
 					} elseif (method_exists($obj, 'authorize')) {
 						// Standard behaviour
 						if (!$obj->authorize()) {
-							$this->sendData($this->unauthorized($ask));
+							$this->sendData($this->unauthorized());
 							exit;
 						}
 					}
@@ -139,13 +145,13 @@ class RestServer
 		}
 	}
 
-	public function addClass($class, $basePath = '')
+    public function addClass($class, $basePath = '')
 	{
 		$this->loadCache();
 
 		if (!$this->cached) {
 			if (is_string($class) && !class_exists($class)){
-				throw new Exception('Invalid method or class');
+				throw new \Exception('Invalid method or class');
 			} elseif (!is_string($class) && !is_object($class)) {
 				throw new Exception('Invalid method or class; must be a classname or object');
 			}
@@ -488,8 +494,8 @@ class RestServer
 	/**
 	 * Set an URL prefix
 	 *
-	 * You can set the root to achive something like a base directory, so
-	 * you don't have to prepand that directory prefix on every addClass
+	 * You can set the root to achieve something like a base directory, so
+	 * you don't have to prepend that directory prefix on every addClass
 	 * class.
 	 *
 	 * @access public
@@ -500,7 +506,7 @@ class RestServer
 	{
 		// do nothing if root isn't a valid prefix
 		if (empty($root)) {
-			break;
+			return;
 		}
 
 		// Kill slash padding and add a trailing slash afterwards
@@ -512,14 +518,14 @@ class RestServer
 	/**
 	 * Auxiliary method to help converting a PHP array into a XML representation.
 	 *
-	 * This XML representation is one of various posible representation. If
+	 * This XML representation is one of various possible representation. If
 	 * you want to alter the XML representation you should subclass RestServer
 	 * and implement array2xml by yourself.
 	 *
 	 * @access protected
 	 * @param array $data PHP array
 	 * @param bool $pretty If set, the output have line breaks and proper indention
-	 * @param string $indention Don't set this by yourself, it's for recrusive calls
+	 * @param string $indention Don't set this by yourself, it's for recursive calls
 	 * @return string XML representation
 	 */
 	protected function array2xml(array $data, $pretty = false, $indention = 1)
@@ -596,6 +602,7 @@ class RestServer
 					if(($c > 0 && $json[$c-1] != '\\') || $c == 0 ) {
 						$in_string = !$in_string;
 					}
+                    break;
 				default:
 					$new_json .= $char;
 					break;
