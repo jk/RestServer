@@ -42,5 +42,6 @@
     "support": {
         "issues": "https://github.com/jk/restserver/issues",
         "wiki": "https://github.com/jk/restserver/wiki"
-    }
+    },
+    "minimum-stability": "dev"
 }
