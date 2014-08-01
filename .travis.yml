@@ -3,4 +3,4 @@ php:
   - 5.3
   - 5.4
   - 5.5
-script: php -l RestServer.php
+script: find src -name "*.php" | xargs -n1 php -l
