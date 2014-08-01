@@ -7,12 +7,21 @@
 
 namespace JK\RestServer;
 
-
+/**
+ * Class RestHttpStatusCodes
+ * @package JK\RestServer
+ * @see http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
+ */
 class RestHttpStatusCodes extends \SplEnum
 {
     const __default = self::OK;
 
+    // 1xx: Informational - Request received, continuing process
     const CONT = 100;
+    const SWITCHING_PROTOCOLS = 101;
+    const PROCESSING = 102;
+
+    // 2xx: Success - The action was successfully received, understood, and accepted
     const OK = 200;
     const CREATED = 201;
     const ACCEPTED = 202;
@@ -20,6 +29,8 @@ class RestHttpStatusCodes extends \SplEnum
     const NO_CONTENT = 204;
     const RESET_CONTENT = 205;
     const PARTIAL_CONTENT = 206;
+
+    // 3xx: Redirection - Further action must be taken in order to complete the request
     const MULTIPLE_CHOICES = 300;
     const MOVED_PERMANENTLY = 301;
     const FOUND = 302;
@@ -27,6 +38,8 @@ class RestHttpStatusCodes extends \SplEnum
     const NOT_MODIFIED = 304;
     const USE_PROXY = 305;
     const TEMPORARY_REDIRECT = 307;
+
+    // 4xx: Client Error - The request contains bad syntax or cannot be fulfilled
     const BAD_REQUEST = 400;
     const UNAUTHORIZED = 401;
     const PAYMENT_REQUIRED = 402;
@@ -43,6 +56,8 @@ class RestHttpStatusCodes extends \SplEnum
     const UNSUPPORTED_MEDIA_TYPE = 415;
     const REQUESTED_RANGE_NOT_SATISFIABLE = 416;
     const EXPECTATION_FAILED = 417;
+
+    // 5xx: Server Error - The server failed to fulfill an apparently valid request
     const INTERNAL_SERVER_ERROR = 500;
     const NOT_IMPLEMENTED = 501;
     const SERVICE_UNAVAILABLE = 503;
