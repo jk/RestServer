@@ -15,8 +15,9 @@ namespace JK\RestServer;
  *
  * @package JK\RestServer
  */
-class Language extends \SplEnum {
-    const __default = self::EN;
+class Language extends \SplEnum
+{
+    const __DEFAULT = self::EN;
 
     const DE = "de";
     const DE_DE = "de_DE";

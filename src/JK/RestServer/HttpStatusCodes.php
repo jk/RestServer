@@ -16,7 +16,7 @@ use SplEnum;
  */
 class HttpStatusCodes extends SplEnum
 {
-    const __default = self::OK;
+    const __DEFAULT = self::OK;
 
     // 1xx: Informational - Request received, continuing process
     const CONT = 100;
