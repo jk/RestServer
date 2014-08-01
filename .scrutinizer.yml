@@ -3,9 +3,19 @@ imports:
 
 filter:
     excluded_paths:
-        - 'geshi/*'
-        - 'geshi.php'
+        - 'bin/*'
+        - 'vendor/*'
+        - 'features/*'
+        - 'spec/*'
+
+ before_commands:
+   - composer install --prefer-source --dev
     
 tools:
     php_sim: true
     php_cpd: false
+
+    # PHP Code Sniffer
+    php_code_sniffer:
+      config:
+        standard: PSR2
