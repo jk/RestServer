@@ -7,12 +7,14 @@
 
 namespace JK\RestServer;
 
+use SplEnum;
+
 /**
  * Class RestHttpStatusCodes
  * @package JK\RestServer
  * @see http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
  */
-class HttpStatusCodes extends \SplEnum
+class HttpStatusCodes extends SplEnum
 {
     const __default = self::OK;
 

@@ -1,21 +1,21 @@
 imports:
-    - php
+  - php
 
 filter:
-    excluded_paths:
-        - 'bin/*'
-        - 'vendor/*'
-        - 'features/*'
-        - 'spec/*'
+  excluded_paths:
+    - 'bin/*'
+    - 'vendor/*'
+    - 'features/*'
+    - 'spec/*'
 
- before_commands:
-   - composer install --prefer-source --dev
+before_commands:
+  - composer install --prefer-source --dev
     
 tools:
-    php_sim: true
-    php_cpd: false
+  php_sim: true
+  php_cpd: false
 
-    # PHP Code Sniffer
-    php_code_sniffer:
-      config:
-        standard: PSR2
+  # PHP Code Sniffer
+  php_code_sniffer:
+    config:
+      standard: PSR2
