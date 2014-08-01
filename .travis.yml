@@ -3,4 +3,12 @@ php:
   - 5.3
   - 5.4
   - 5.5
-script: find src -name "*.php" | xargs -n1 php -l
+
+before_script:
+  - composer selfupdate
+  - composer install --prefer-source
+
+script:
+  - find src -name "*.php" | xargs -n1 php -l
+  - bin/phpspec run --no-interaction --format=pretty
+  - bin/behat --format=pretty
