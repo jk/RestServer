@@ -13,5 +13,3 @@ before_script:
 
 script:
   - find src -name "*.php" | xargs -n1 php -l
-  - bin/phpspec run --no-interaction --format=pretty
-  - bin/behat --format=pretty
