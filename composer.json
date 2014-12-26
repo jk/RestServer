@@ -12,7 +12,11 @@
     },
     "require-dev": {
         "behat/behat": "~3.0",
-        "phpspec/phpspec": "~2.0"
+        "phpspec/phpspec": "~2.0",
+        "phpunit/phpunit": "~4",
+        "mockery/mockery": "0.9.3",
+        "php-vcr/php-vcr": "1.1.7",
+        "php-vcr/phpunit-testlistener-vcr": "1.1.5"
     },
     "suggest": {
         "ext-simplexml": "*"
