@@ -30,7 +30,7 @@ build:
   tests:
     override:
       -
-        command: 'phpunit --coverage-clover=code_coverage.xml'
+        command: 'phpunit --coverage-clover=`pwd`/coverage.xml'
         coverage:
-          file: 'code_coverage.xml'
+          file: 'coverage.xml'
           format: 'php-clover'
