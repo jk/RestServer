@@ -22,6 +22,11 @@ tools:
       standard: PSR2
 
 build:
+  dependencies:
+    before:
+      - 'pecl install SPL_Types'
+  environment:
+    timezone: 'UTC'
   tests:
     override:
       -
