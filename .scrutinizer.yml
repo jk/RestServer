@@ -9,7 +9,7 @@ filter:
     - 'spec/*'
 
 before_commands:
-  - composer install --prefer-source --dev
+  - composer install --prefer-source --dev --optimize-autoloader --no-interaction
     
 tools:
   php_sim: true
