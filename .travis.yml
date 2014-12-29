@@ -13,3 +13,4 @@ before_script:
 
 script:
   - find src -name "*.php" | xargs -n1 php -l
+  - phpunit
