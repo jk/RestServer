@@ -379,6 +379,7 @@ class RestServer
 			$override = trim($override);
 		}
 
+
 		// Check for trailing dot-format syntax like /controller/action.format -> action.json
 		if(preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
 			$override = $matches[1];
@@ -398,6 +399,8 @@ class RestServer
 			$format = RestFormat::HTML;
 		} elseif (in_array(RestFormat::PLAIN, $accept)) {
 			$format = RestFormat::PLAIN;
+		} elseif (in_array(RestFormat::XML, $accept)) {
+			$format = RestFormat::XML;
 		}
 		return $format;
 	}
