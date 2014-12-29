@@ -29,7 +29,8 @@
     ],
     "autoload": {
         "psr-0": {
-            "JK\\RestServer\\": "src/"
+            "JK\\RestServer\\": "src/",
+            "JK\\RestServer\\Tests\\": "tests/"
         }
     },
     "homepage": "https://github.com/jk/RestServer",
