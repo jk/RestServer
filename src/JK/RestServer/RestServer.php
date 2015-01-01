@@ -64,7 +64,15 @@ class RestServer
 		$this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']) . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
 	}
 
-	public function  __destruct()
+    /**
+     * @return string
+     */
+    public function getRawHttpRequestBody()
+    {
+        return file_get_contents('php://input');
+    }
+
+    public function  __destruct()
 	{
 		if ($this->mode == 'production' && !$this->cached) {
 			if (function_exists('apc_store')) {
@@ -407,7 +415,9 @@ class RestServer
 
 	public function getData()
 	{
-		$data = file_get_contents('php://input');
+		$data = $this->getRawHttpRequestBody();
+
+
 
 		if (isset($_SERVER['CONTENT_TYPE'])) {
 			$components = preg_split('/\;\s*/', $_SERVER['CONTENT_TYPE']);
