@@ -415,8 +415,10 @@ class RestServer
 				$a = explode('&', $data);
 				$output = array();
 				foreach ($a as $entry) {
-					$tmp = explode('=', $entry);
-					$output[urldecode($tmp[0])] = urldecode($tmp[1]);
+                    if (strpos($entry, '=') > 0) {
+                        $tmp = explode('=', $entry);
+                        $output[urldecode($tmp[0])] = urldecode($tmp[1]);
+                    }
 				}
 				return $output;
 			}
