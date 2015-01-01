@@ -17,6 +17,11 @@
             <directory>tests</directory>
         </testsuite>
     </testsuites>
+    <groups>
+        <exclude>
+            <group>disabled</group>
+        </exclude>
+    </groups>
 
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
