@@ -30,11 +30,7 @@
     </filter>
     <logging>
         <log type="junit" target="build/log/junit.xml" logIncompleteSkipped="false" />
-        <!--<log type="coverage-clover" target="build/log/phpunit_coverage.xml" />-->
         <!--<log type="json" target="build/log/phpunit.json"/>-->
-        <!--<log type="junit" target="build/log/phpunit_junit.xml" logIncompleteSkipped="false"/>-->
-        <!--<log type="testdox-html" target="build/log/phpunit_testdox.html"/>-->
-        <!--<log type="testdox-text" target="build/log/phpunit_testdox.txt"/>-->
     </logging>
 
 </phpunit>
