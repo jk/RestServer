@@ -268,7 +268,7 @@ class RestServer
 					end($params);
 					$max = key($params);
 					for ($i = 0; $i < $max; $i++) {
-						if (!key_exists($i, $params)) {
+						if (!array_key_exists($i, $params)) {
 							$params[$i] = null;
 						}
 					}
