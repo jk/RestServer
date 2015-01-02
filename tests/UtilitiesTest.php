@@ -5,6 +5,7 @@ namespace JK\RestServer\Tests;
 
 
 use JK\RestServer\Utilities;
+use stdClass;
 
 class UtilitiesTest extends \PHPUnit_Framework_TestCase
 {
@@ -76,6 +77,86 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInternalType('array', $result);
         $this->assertCount(0, $result, 'An empty header value should lead to an empty result array');
+    }
+
+    public function testSimpleArrayToObject()
+    {
+        $array = array(
+            'key1' => 'value1'
+        );
+
+        $object = Utilities::arrayToObject($array);
+
+        $this->assertObjectHasAttribute('key1', $object);
+        $this->assertEquals('value1', $object->key1);
+    }
+
+    public function testTwoElementArrayToObject()
+    {
+        $array = array(
+            'key1' => 'value1',
+            'key2' => 'value2'
+        );
+
+        $object = Utilities::arrayToObject($array);
+
+        $this->assertObjectHasAttribute('key1', $object);
+        $this->assertEquals('value1', $object->key1);
+        $this->assertObjectHasAttribute('key2', $object);
+        $this->assertEquals('value2', $object->key2);
+    }
+
+    public function testNestedArrayToObject()
+    {
+        $array = array(
+            'key1' => array(
+                'key2' => 'value'
+            )
+        );
+
+        $object = Utilities::arrayToObject($array);
+
+        $this->assertObjectHasAttribute('key1', $object);
+        $this->assertObjectHasAttribute('key2', $object->key1);
+        $this->assertEquals('value', $object->key1->key2);
+    }
+
+    public function testSimpleObjectToArray()
+    {
+        $object = new stdClass();
+        $object->key1 = 'value1';
+
+        $array = Utilities::objectToArray($object);
+
+        $this->assertArrayHasKey('key1', $array);
+        $this->assertEquals('value1', $array['key1']);
+    }
+
+    public function testObjectWithTwoPropertiesToArray()
+    {
+        $object = new stdClass();
+        $object->key1 = 'value1';
+        $object->key2 = 'value2';
+
+        $array = Utilities::objectToArray($object);
+
+        $this->assertArrayHasKey('key1', $array);
+        $this->assertEquals('value1', $array['key1']);
+        $this->assertArrayHasKey('key2', $array);
+        $this->assertEquals('value2', $array['key2']);
+    }
+
+    public function testNestedObjectToArray()
+    {
+        $object = new stdClass();
+        $object->key1 = new stdClass();
+        $object->key1->key2 = 'value2';
+
+        $array = Utilities::objectToArray($object);
+
+        $this->assertArrayHasKey('key1', $array);
+        $this->assertArrayHasKey('key2', $array['key1']);
+        $this->assertEquals('value2', $array['key1']['key2']);
     }
 
 
