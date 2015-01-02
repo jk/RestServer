@@ -68,8 +68,8 @@ class Utilities
     /**
      * Converts an array into an object
      *
-     * @param  array|string $data Array data
-     * @return object       Object
+     * @param  array|string  $data Array data
+     * @return object|string Object
      */
     public static function arrayToObject($data)
     {

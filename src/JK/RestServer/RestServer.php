@@ -26,6 +26,7 @@
 namespace JK\RestServer;
 
 use Exception;
+use GeSHi;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionObject;
@@ -50,11 +51,13 @@ class RestServer
     protected $map = array();
     protected $errorClasses = array();
     protected $cached;
+    protected $data;
 
     /**
      * The constructor.
      *
-     * @param string $mode The mode, either debug or production
+     * @param string $mode  The mode, either debug or production
+     * @param string $realm Can be debug or production
      */
     public function __construct($mode = 'debug', $realm = 'Rest Server')
     {
@@ -132,7 +135,8 @@ class RestServer
                     } elseif (method_exists($obj, 'authorize')) {
                         // Standard behaviour
                         if (!$obj->authorize()) {
-                            $this->sendData($this->unauthorized());
+                            $this->unauthorized(false);
+                            $this->sendData('');
                             exit;
                         }
                     }
@@ -192,7 +196,7 @@ class RestServer
                 $reflection = new ReflectionClass($class);
             }
 
-            if ($reflection->hasMethod($method)) {
+            if (isset($reflection) && $reflection->hasMethod($method)) {
                 $obj = is_string($class) ? new $class() : $class;
                 $obj->$method();
 
@@ -220,7 +224,7 @@ class RestServer
             } elseif (file_exists($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache')) {
                 $map = unserialize(file_get_contents($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache'));
             }
-            if ($map && is_array($map)) {
+            if (isset($map) && is_array($map)) {
                 $this->map = $map;
                 $this->cached = true;
             }
@@ -293,6 +297,8 @@ class RestServer
                 }
             }
         }
+
+        return;
     }
 
     protected function generateMap($class, $basePath)
@@ -303,7 +309,11 @@ class RestServer
             $reflection = new ReflectionClass($class);
         }
 
-        $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
+        if (isset($reflection)) {
+            $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
+        } else {
+            $methods = array();
+        }
 
         foreach ($methods as $method) {
             $doc = $method->getDocComment();
@@ -549,13 +559,14 @@ class RestServer
      * and implement array2xml by yourself.
      *
      * @access protected
-     * @param  array  $data      PHP array
-     * @param  bool   $pretty    If set, the output have line breaks and proper indention
-     * @param  string $indention Don't set this by yourself, it's for recursive calls
-     * @return string XML representation
+     * @param  array      $data      PHP array
+     * @param  bool       $pretty    If set, the output have line breaks and proper indention
+     * @param  int|string $indention Don't set this by yourself, it's for recursive calls
+     * @return string     XML representation
      */
     protected function array2xml(array $data, $pretty = false, $indention = 1)
     {
+        $xml = '';
         foreach ($data as $key => $value) {
             $tag = (is_numeric($key)) ? 'item' : $key;
 
