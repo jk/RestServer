@@ -103,7 +103,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group disabled
      * @dataProvider keyValueBodyProvider
      */
     public function testGetDataAsJsonWithoutContentType(array $array_input_data)
@@ -122,7 +121,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group disabled
      * @dataProvider keyValueBodyProvider
      */
     public function testGetDataAsJsonWithContentType(array $array_input_data)

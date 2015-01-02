@@ -417,8 +417,6 @@ class RestServer
 	{
 		$data = $this->getRawHttpRequestBody();
 
-
-
 		if (isset($_SERVER['CONTENT_TYPE'])) {
 			$components = preg_split('/\;\s*/', $_SERVER['CONTENT_TYPE']);
 			if (in_array('application/x-www-form-urlencoded', $components)) {
@@ -431,7 +429,11 @@ class RestServer
                     }
 				}
 				return $output;
-			}
+			} else if (in_array('application/json', $components)) {
+                $data = Utilities::objectToArray(json_decode($data));
+            } else {
+                throw new RestException(500, 'Content-Type not supported');
+            }
 		} else if ($this->format == RestFormat::AMF) {
 			require_once 'Zend/Amf/Parse/InputStream.php';
 			require_once 'Zend/Amf/Parse/Amf3/Deserializer.php';
@@ -439,7 +441,7 @@ class RestServer
 			$deserializer = new Zend_Amf_Parse_Amf3_Deserializer($stream);
 			$data = $deserializer->readTypeMarker();
 		} else {
-			$data = json_decode($data);
+            $data = Utilities::objectToArray(json_decode($data));
 		}
 
 		return $data;
