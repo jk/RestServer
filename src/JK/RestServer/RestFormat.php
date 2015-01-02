@@ -30,20 +30,19 @@ namespace JK\RestServer;
  */
 class RestFormat
 {
-
-	const PLAIN = 'text/plain';
-	const HTML = 'text/html';
-	const AMF = 'application/x-amf';
-	const JSON = 'application/json';
-	const JSONP = 'application/json-p';
-	const XML = 'application/xml';
-	static public $formats = array(
-		'plain' => RestFormat::PLAIN,
-		'txt' => RestFormat::PLAIN,
-		'html' => RestFormat::HTML,
-		'amf' => RestFormat::AMF,
-		'json' => RestFormat::JSON,
-		'jsonp' => RestFormat::JSONP,
-		'xml' => RestFormat::XML,
-	);
+    const PLAIN = 'text/plain';
+    const HTML = 'text/html';
+    const AMF = 'application/x-amf';
+    const JSON = 'application/json';
+    const JSONP = 'application/json-p';
+    const XML = 'application/xml';
+    static public $formats = array(
+        'plain' => RestFormat::PLAIN,
+        'txt' => RestFormat::PLAIN,
+        'html' => RestFormat::HTML,
+        'amf' => RestFormat::AMF,
+        'json' => RestFormat::JSON,
+        'jsonp' => RestFormat::JSONP,
+        'xml' => RestFormat::XML,
+    );
 }

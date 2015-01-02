@@ -3,7 +3,6 @@
 
 namespace JK\RestServer;
 
-
 class Utilities
 {
     /**
@@ -40,8 +39,8 @@ class Utilities
     /**
      * Converts an object into an array
      *
-     * @param object $data object
-     * @return array Array
+     * @param  object $data object
+     * @return array  Array
      */
     public static function objectToArray($data)
     {
@@ -58,6 +57,7 @@ class Utilities
             * for recursive call
             */
             $self_name = 'self::'.__FUNCTION__;
+
             return array_map($self_name, $data);
         } else {
             // Return array
@@ -68,10 +68,11 @@ class Utilities
     /**
      * Converts an array into an object
      *
-     * @param array|string $data Array data
-     * @return object Object
+     * @param  array|string $data Array data
+     * @return object       Object
      */
-    public static function arrayToObject($data) {
+    public static function arrayToObject($data)
+    {
         if (is_array($data)) {
             /*
             * Return array converted to object
@@ -79,9 +80,9 @@ class Utilities
             * for recursive call
             */
             $self_name = 'self::'.__FUNCTION__;
+
             return (object) array_map($self_name, $data);
-        }
-        else {
+        } else {
             // Return object
             return $data;
         }
