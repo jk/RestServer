@@ -1,11 +1,36 @@
 imports:
-    - php
+  - php
 
 filter:
-    excluded_paths:
-        - 'geshi/*'
-        - 'geshi.php'
+  excluded_paths:
+    - 'bin/*'
+    - 'vendor/*'
+    - 'features/*'
+    - 'spec/*'
+    - 'tests/*'
+
+before_commands:
+  - composer install --prefer-source --dev --optimize-autoloader --no-interaction
     
 tools:
-    php_sim: true
-    php_cpd: false
+  php_sim: true
+  php_cpd: false
+
+  # PHP Code Sniffer
+  php_code_sniffer:
+    config:
+      standard: PSR2
+
+build:
+  dependencies:
+    before:
+      - 'pecl install SPL_Types'
+  environment:
+    timezone: 'UTC'
+  tests:
+    override:
+      -
+        command: 'phpunit --coverage-clover=`pwd`/coverage.xml'
+        coverage:
+          file: 'coverage.xml'
+          format: 'php-clover'

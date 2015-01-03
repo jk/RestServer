@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit
+        backupGlobals="false"
+        backupStaticAttributes="false"
+        bootstrap="tests/Bootstrap.php"
+        colors="true"
+        convertErrorsToExceptions="true"
+        convertNoticesToExceptions="true"
+        convertWarningsToExceptions="true"
+        processIsolation="false"
+        stopOnFailure="false"
+        syntaxCheck="true"
+        >
+    <testsuites>
+        <testsuite name="jk/restserver unit tests">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <groups>
+        <exclude>
+            <group>disabled</group>
+        </exclude>
+    </groups>
+
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">src</directory>
+        </whitelist>
+    </filter>
+    <logging>
+        <log type="junit" target="build/log/junit.xml" logIncompleteSkipped="false" />
+        <!--<log type="json" target="build/log/phpunit.json"/>-->
+    </logging>
+
+</phpunit>
