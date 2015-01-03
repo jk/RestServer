@@ -6,7 +6,7 @@
 [![License](https://poser.pugx.org/jk/restserver/license.svg)](https://packagist.org/packages/jk/restserver)
 [![Total Downloads](https://poser.pugx.org/jk/restserver/downloads.svg)](https://packagist.org/packages/jk/restserver)
 [![Latest Unstable Version](https://poser.pugx.org/jk/restserver/v/unstable.svg)](https://packagist.org/packages/jk/restserver)
-[![Dependency Status](https://www.versioneye.com/php/jk:restserver/1.0.0/badge.svg)](https://www.versioneye.com/php/jk:restserver/1.0.0)
+[![Dependency Status](https://www.versioneye.com/php/jk:restserver/badge.svg)](https://www.versioneye.com/php/jk:restserver/)
 
 | Master branch | Develop branch |
 | :---: | :---: |
