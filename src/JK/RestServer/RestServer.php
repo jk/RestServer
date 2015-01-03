@@ -67,6 +67,23 @@ class RestServer
     }
 
     /**
+     * @param  object|string                    $object_or_class Object (instance of a class) or class name
+     * @return ReflectionClass|ReflectionObject
+     */
+    protected static function reflectionFromObjectOrClass($object_or_class)
+    {
+        $reflection = null;
+
+        if (is_object($object_or_class)) {
+            $reflection = new ReflectionObject($object_or_class);
+        } elseif (class_exists($object_or_class)) {
+            $reflection = new ReflectionClass($object_or_class);
+        }
+
+        return $reflection;
+    }
+
+    /**
      * @return string
      */
     public function getRawHttpRequestBody()
@@ -190,11 +207,7 @@ class RestServer
     {
         $method = "handle$statusCode";
         foreach ($this->errorClasses as $class) {
-            if (is_object($class)) {
-                $reflection = new ReflectionObject($class);
-            } elseif (class_exists($class)) {
-                $reflection = new ReflectionClass($class);
-            }
+            $reflection = self::reflectionFromObjectOrClass($class);
 
             if (isset($reflection) && $reflection->hasMethod($method)) {
                 $obj = is_string($class) ? new $class() : $class;
@@ -303,11 +316,7 @@ class RestServer
 
     protected function generateMap($class, $basePath)
     {
-        if (is_object($class)) {
-            $reflection = new ReflectionObject($class);
-        } elseif (class_exists($class)) {
-            $reflection = new ReflectionClass($class);
-        }
+        $reflection = self::reflectionFromObjectOrClass($class);
 
         if (isset($reflection)) {
             $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
