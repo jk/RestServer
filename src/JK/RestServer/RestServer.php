@@ -323,6 +323,14 @@ class RestServer
                 foreach ($matches as $match) {
                     $httpMethod = $match[1];
                     $url = $this->root.$basePath.$match[2];
+
+                    // quick fix for running on windows
+                    $url = str_replace('\\', '/', $url);
+                    if ($url && $url[0] == '/') {
+                        $url = substr($url, 1);
+                    }
+                    // end quick fix
+
                     if ($url && $url[strlen($url) - 1] == '/') {
                         $url = substr($url, 0, -1);
                     }
