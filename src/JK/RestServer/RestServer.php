@@ -200,7 +200,7 @@ class RestServer
                 $obj = is_string($class) ? new $class() : $class;
                 $obj->$method();
 
-                return;
+                return null;
             }
         }
 
@@ -213,7 +213,7 @@ class RestServer
     protected function loadCache()
     {
         if ($this->cached !== null) {
-            return;
+            return null;
         }
 
         $this->cached = false;
@@ -240,11 +240,11 @@ class RestServer
     protected function findUrl()
     {
         if (count($this->map) == 0) {
-            return;
+            return null;
         }
         $urls = $this->map[$this->method];
         if (!$urls) {
-            return;
+            return null;
         }
 
         foreach ($urls as $url => $call) {
@@ -298,7 +298,7 @@ class RestServer
             }
         }
 
-        return;
+        return null;
     }
 
     protected function generateMap($class, $basePath)
@@ -542,7 +542,7 @@ class RestServer
     {
         // do nothing if root isn't a valid prefix
         if (empty($root)) {
-            return;
+            return null;
         }
 
         // Kill slash padding and add a trailing slash afterwards
