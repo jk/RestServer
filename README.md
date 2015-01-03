@@ -4,7 +4,7 @@
 # RestServer.php
 | Master branch | Develop branch |
 | :---: | :---: |
-[![Master Build Status](https://secure.travis-ci.org/jk/RestServer.png?branch=master)](http://travis-ci.org/jk/RestServer)|[![Develop Build Status](https://secure.travis-ci.org/jk/RestServer.png?branch=develop)](http://travis-ci.org/jk/RestServer)
+[[![Master Build Status](https://travis-ci.org/jk/RestServer.svg?branch=master)](https://travis-ci.org/jk/RestServer)|[![Develop Build Status](https://travis-ci.org/jk/RestServer.svg?branch=develop)](https://travis-ci.org/jk/RestServer)
 
 A PHP REST server for providing a very light-weight REST API. Very easy to set up and get going. Independent from other libraries and frameworks. Supports HTTP authentication. Supports AMF data if the Zend Framework is present for Flash clients.
 
