@@ -47,8 +47,5 @@
     "support": {
         "issues": "https://github.com/jk/restserver/issues",
         "wiki": "https://github.com/jk/restserver/wiki"
-    },
-    "config": {
-        "bin-dir": "bin"
     }
 }
