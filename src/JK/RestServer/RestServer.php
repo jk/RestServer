@@ -381,15 +381,7 @@ class RestServer
 
     public function getMethod()
     {
-        $method = $_SERVER['REQUEST_METHOD'];
-        $override = isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']) ? $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] : (isset($_GET['method']) ? $_GET['method'] : '');
-        if ($method == 'POST' && strtoupper($override) == 'PUT') {
-            $method = 'PUT';
-        } elseif ($method == 'POST' && strtoupper($override) == 'DELETE') {
-            $method = 'DELETE';
-        }
-
-        return $method;
+        return $_SERVER['REQUEST_METHOD'];
     }
 
     public function getFormat()
