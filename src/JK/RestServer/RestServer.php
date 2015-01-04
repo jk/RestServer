@@ -67,6 +67,23 @@ class RestServer
     }
 
     /**
+     * @param  object|string                    $object_or_class Object (instance of a class) or class name
+     * @return ReflectionClass|ReflectionObject
+     */
+    protected static function reflectionFromObjectOrClass($object_or_class)
+    {
+        $reflection = null;
+
+        if (is_object($object_or_class)) {
+            $reflection = new ReflectionObject($object_or_class);
+        } elseif (class_exists($object_or_class)) {
+            $reflection = new ReflectionClass($object_or_class);
+        }
+
+        return $reflection;
+    }
+
+    /**
      * @return string
      */
     public function getRawHttpRequestBody()
@@ -190,17 +207,13 @@ class RestServer
     {
         $method = "handle$statusCode";
         foreach ($this->errorClasses as $class) {
-            if (is_object($class)) {
-                $reflection = new ReflectionObject($class);
-            } elseif (class_exists($class)) {
-                $reflection = new ReflectionClass($class);
-            }
+            $reflection = self::reflectionFromObjectOrClass($class);
 
             if (isset($reflection) && $reflection->hasMethod($method)) {
                 $obj = is_string($class) ? new $class() : $class;
                 $obj->$method();
 
-                return;
+                return null;
             }
         }
 
@@ -213,7 +226,7 @@ class RestServer
     protected function loadCache()
     {
         if ($this->cached !== null) {
-            return;
+            return null;
         }
 
         $this->cached = false;
@@ -240,11 +253,11 @@ class RestServer
     protected function findUrl()
     {
         if (count($this->map) == 0) {
-            return;
+            return null;
         }
         $urls = $this->map[$this->method];
         if (!$urls) {
-            return;
+            return null;
         }
 
         foreach ($urls as $url => $call) {
@@ -298,16 +311,12 @@ class RestServer
             }
         }
 
-        return;
+        return null;
     }
 
     protected function generateMap($class, $basePath)
     {
-        if (is_object($class)) {
-            $reflection = new ReflectionObject($class);
-        } elseif (class_exists($class)) {
-            $reflection = new ReflectionClass($class);
-        }
+        $reflection = self::reflectionFromObjectOrClass($class);
 
         if (isset($reflection)) {
             $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
@@ -323,6 +332,14 @@ class RestServer
                 foreach ($matches as $match) {
                     $httpMethod = $match[1];
                     $url = $this->root.$basePath.$match[2];
+
+                    // quick fix for running on windows
+                    $url = str_replace('\\', '/', $url);
+                    if ($url && $url[0] == '/') {
+                        $url = substr($url, 1);
+                    }
+                    // end quick fix
+
                     if ($url && $url[strlen($url) - 1] == '/') {
                         $url = substr($url, 0, -1);
                     }
@@ -381,15 +398,7 @@ class RestServer
 
     public function getMethod()
     {
-        $method = $_SERVER['REQUEST_METHOD'];
-        $override = isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']) ? $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] : (isset($_GET['method']) ? $_GET['method'] : '');
-        if ($method == 'POST' && strtoupper($override) == 'PUT') {
-            $method = 'PUT';
-        } elseif ($method == 'POST' && strtoupper($override) == 'DELETE') {
-            $method = 'DELETE';
-        }
-
-        return $method;
+        return $_SERVER['REQUEST_METHOD'];
     }
 
     public function getFormat()
@@ -542,7 +551,7 @@ class RestServer
     {
         // do nothing if root isn't a valid prefix
         if (empty($root)) {
-            return;
+            return null;
         }
 
         // Kill slash padding and add a trailing slash afterwards

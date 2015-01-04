@@ -180,5 +180,37 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         return $mock;
     }
 
+    public function testGetPath()
+    {
+        $_SERVER['REQUEST_URI'] = '/controller/action.json/';
 
+        $result = $this->sut->getPath();
+
+        // /controller/action.json -> /controller/action
+        $this->assertEquals('controller/action', $result);
+
+    }
+
+    public function requestMethodProvider()
+    {
+        return array(
+            array('PUT'),
+            array('GET'),
+            array('DELETE'),
+            array('PUSH')
+        );
+    }
+
+    /**
+     * @dataProvider requestMethodProvider
+     * @param $request_method
+     */
+    public function testGetMethod($request_method)
+    {
+        $_SERVER['REQUEST_METHOD'] = $request_method;
+
+        $result = $this->sut->getMethod();
+
+        $this->assertEquals($request_method, $result);
+    }
 }
