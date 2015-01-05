@@ -1,49 +1,51 @@
 {
-    "name": "jk/restserver",
-    "type": "library",
-    "description": "A PHP REST server for providing a very light-weight REST API without aweful routing configuration",
-    "require": {
-        "php": ">= 5.3.13",
-        "ext-json": "*",
-        "ext-pcre": "*",
-        "ext-reflection": "*",
-        "ext-spl": "*",
-        "geshi/geshi": "dev-master@dev"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "~4",
-        "mockery/mockery": "0.9.3",
-        "fabpot/php-cs-fixer": "~1.3"
-    },
-    "suggest": {
-        "ext-simplexml": "*"
-    },
-    "keyword": [
-        "web service",
-        "rest",
-        "restful",
-        "light weight",
-        "server",
-        "api"
-    ],
-    "autoload": {
-        "psr-0": {
-            "JK\\RestServer\\": "src/",
-            "JK\\RestServer\\Tests\\": "tests/"
-        }
-    },
-    "homepage": "https://github.com/jk/RestServer",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Jens Kohl",
-            "email": "jens.kohl@gmail.de",
-            "role": "Lead",
-            "homepage": "https://github.com/jk"
-        }
-    ],
-    "support": {
-        "issues": "https://github.com/jk/restserver/issues",
-        "wiki": "https://github.com/jk/restserver/wiki"
+  "name": "jk/restserver",
+  "type": "library",
+  "description": "A PHP REST server for providing a very light-weight REST API without aweful routing configuration",
+  "require": {
+    "php": ">= 5.3.13",
+    "ext-json": "*",
+    "ext-pcre": "*",
+    "ext-reflection": "*",
+    "ext-spl": "*",
+    "geshi/geshi": "dev-master@dev"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~4",
+    "mockery/mockery": ">=0.9.3",
+    "fabpot/php-cs-fixer": "~1.3",
+    "squizlabs/php_codesniffer": "~2",
+    "satooshi/php-coveralls": ">=0.6.1"
+  },
+  "suggest": {
+    "ext-simplexml": "*"
+  },
+  "keyword": [
+    "web service",
+    "rest",
+    "restful",
+    "light weight",
+    "server",
+    "api"
+  ],
+  "autoload": {
+    "psr-0": {
+      "JK\\RestServer\\": "src/",
+      "JK\\RestServer\\Tests\\": "tests/"
     }
+  },
+  "homepage": "https://github.com/jk/RestServer",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jens Kohl",
+      "email": "jens.kohl@gmail.de",
+      "role": "Lead",
+      "homepage": "https://github.com/jk"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/jk/restserver/issues",
+    "wiki": "https://github.com/jk/restserver/wiki"
+  }
 }
