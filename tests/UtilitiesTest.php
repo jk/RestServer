@@ -3,7 +3,6 @@
 
 namespace JK\RestServer\Tests;
 
-
 use JK\RestServer\Utilities;
 use stdClass;
 
@@ -158,6 +157,4 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('key2', $array['key1']);
         $this->assertEquals('value2', $array['key1']['key2']);
     }
-
-
 }
