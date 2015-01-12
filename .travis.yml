@@ -11,10 +11,10 @@ matrix:
     - php: hhvm
 
 before_script:
-  - pecl install SPL_Types
   - echo 'date.timezone = "UTC"' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - composer selfupdate
-  - composer install --prefer-source --no-interaction --optimize-autoloader
+  - travis_retry pecl install SPL_Types
+  - travis_retry composer selfupdate
+  - travis_retry composer install --prefer-source --no-interaction --optimize-autoloader
 
 script:
   - find src -name "*.php" | xargs -n1 php -l
