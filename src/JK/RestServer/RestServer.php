@@ -147,14 +147,12 @@ class RestServer
                 if (empty($keys['noAuth'])) {
                     if (method_exists($this, 'doServerWideAuthorization')) {
                         if (!$this->doServerWideAuthorization()) {
-                            exit; // stop here to prevent unauthorized access to any output
+                            $this->unauthorized(false);
                         }
                     } elseif (method_exists($obj, 'authorize')) {
                         // Standard behaviour
                         if (!$obj->authorize()) {
                             $this->unauthorized(false);
-                            $this->sendData('');
-                            exit;
                         }
                     }
                 }
