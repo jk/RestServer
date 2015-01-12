@@ -422,8 +422,6 @@ class RestServer
         $override = isset($_GET['format']) ? $_GET['format'] : $override;
         if (isset(RestFormat::$formats[$override])) {
             $format = RestFormat::$formats[$override];
-        } elseif (in_array(RestFormat::AMF, $accept)) {
-            $format = RestFormat::AMF;
         } elseif (in_array(RestFormat::JSON, $accept)) {
             $format = RestFormat::JSON;
         } elseif (in_array(RestFormat::JSONP, $accept)) {
@@ -461,12 +459,6 @@ class RestServer
             } else {
                 throw new RestException(500, 'Content-Type not supported');
             }
-        } elseif ($this->format == RestFormat::AMF) {
-            require_once 'Zend/Amf/Parse/InputStream.php';
-            require_once 'Zend/Amf/Parse/Amf3/Deserializer.php';
-            $stream = new Zend_Amf_Parse_InputStream($data);
-            $deserializer = new Zend_Amf_Parse_Amf3_Deserializer($stream);
-            $data = $deserializer->readTypeMarker();
         } else {
             $data = Utilities::objectToArray(json_decode($data));
         }
@@ -480,14 +472,7 @@ class RestServer
         header("Expires: 0");
         header('Content-Type: '.$this->format);
 
-        if ($this->format == RestFormat::AMF) {
-            require_once 'Zend/Amf/Parse/OutputStream.php';
-            require_once 'Zend/Amf/Parse/Amf3/Serializer.php';
-            $stream = new Zend_Amf_Parse_OutputStream();
-            $serializer = new Zend_Amf_Parse_Amf3_Serializer($stream);
-            $serializer->writeTypeMarker($data);
-            $data = $stream->getStream();
-        } elseif ($this->format == RestFormat::XML) {
+        if ($this->format == RestFormat::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
             $output .= "<result>".$this->array2xml($data).'</result>';
             $data = $output;
