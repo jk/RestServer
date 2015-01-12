@@ -147,14 +147,12 @@ class RestServer
                 if (empty($keys['noAuth'])) {
                     if (method_exists($this, 'doServerWideAuthorization')) {
                         if (!$this->doServerWideAuthorization()) {
-                            exit; // stop here to prevent unauthorized access to any output
+                            $this->unauthorized(false);
                         }
                     } elseif (method_exists($obj, 'authorize')) {
                         // Standard behaviour
                         if (!$obj->authorize()) {
                             $this->unauthorized(false);
-                            $this->sendData('');
-                            exit;
                         }
                     }
                 }
@@ -503,7 +501,7 @@ class RestServer
             }
             $data = json_encode($data);
             if ($data && $this->mode == 'debug') {
-                $data = $this->json_format($data);
+                $data = $this->prettyPrintJson($data);
             }
 
             if ($this->format == RestFormat::JSONP) {
@@ -602,7 +600,7 @@ class RestServer
     }
 
     // Pretty print some JSON
-    private function json_format($json)
+    private function prettyPrintJson($json)
     {
         $tab = "  ";
         $new_json = "";
