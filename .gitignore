@@ -1,8 +1,6 @@
-.DS_Store
 vendor
 composer.phar
 composer.lock
-.idea
 .htaccess
 bin
 build
