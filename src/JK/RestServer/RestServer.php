@@ -485,9 +485,6 @@ class RestServer
                 }
             }
             $data = json_encode($data);
-            if ($data && $this->mode == 'debug') {
-                $data = $this->prettyPrintJson($data);
-            }
 
             if ($this->format == RestFormat::JSONP) {
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
@@ -582,65 +579,6 @@ class RestServer
         }
 
         return $xml;
-    }
-
-    // Pretty print some JSON
-    private function prettyPrintJson($json)
-    {
-        $tab = "  ";
-        $new_json = "";
-        $indent_level = 0;
-        $in_string = false;
-
-        $len = strlen($json);
-
-        for ($c = 0; $c < $len; $c++) {
-            $char = $json[$c];
-            switch ($char) {
-                case '{':
-                case '[':
-                    if (!$in_string) {
-                        $new_json .= $char."\n".str_repeat($tab, $indent_level+1);
-                        $indent_level++;
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case '}':
-                case ']':
-                    if (!$in_string) {
-                        $indent_level--;
-                        $new_json .= "\n".str_repeat($tab, $indent_level).$char;
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case ',':
-                    if (!$in_string) {
-                        $new_json .= ",\n".str_repeat($tab, $indent_level);
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case ':':
-                    if (!$in_string) {
-                        $new_json .= ": ";
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case '"':
-                    if (($c > 0 && $json[$c-1] != '\\') || $c == 0) {
-                        $in_string = !$in_string;
-                    }
-                    break;
-                default:
-                    $new_json .= $char;
-                    break;
-            }
-        }
-
-        return $new_json;
     }
 
     private $codes = array(
