@@ -501,7 +501,7 @@ class RestServer
             }
             $data = json_encode($data);
             if ($data && $this->mode == 'debug') {
-                $data = $this->json_format($data);
+                $data = $this->prettyPrintJson($data);
             }
 
             if ($this->format == RestFormat::JSONP) {
@@ -600,7 +600,7 @@ class RestServer
     }
 
     // Pretty print some JSON
-    private function json_format($json)
+    private function prettyPrintJson($json)
     {
         $tab = "  ";
         $new_json = "";
