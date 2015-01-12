@@ -474,7 +474,7 @@ class RestServer
 
         if ($this->format == RestFormat::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-            $output .= "<result>".$this->array2xml($data).'</result>';
+            $output .= "<result>".Utilities::arrayToXml($data).'</result>';
             $data = $output;
             unset($output);
         } else {
@@ -538,47 +538,6 @@ class RestServer
         $root = trim($root, '/');
         $root .= '/';
         $this->root = $root;
-    }
-
-    /**
-     * Auxiliary method to help converting a PHP array into a XML representation.
-     *
-     * This XML representation is one of various possible representation. If
-     * you want to alter the XML representation you should subclass RestServer
-     * and implement array2xml by yourself.
-     *
-     * @access protected
-     * @param  array      $data      PHP array
-     * @param  bool       $pretty    If set, the output have line breaks and proper indention
-     * @param  int|string $indention Don't set this by yourself, it's for recursive calls
-     * @return string     XML representation
-     */
-    protected function array2xml(array $data, $pretty = false, $indention = 1)
-    {
-        $xml = '';
-        foreach ($data as $key => $value) {
-            $tag = (is_numeric($key)) ? 'item' : $key;
-
-            // Make it pretty
-            $tab = '';
-            $newline = '';
-            if ($pretty) {
-                for ($i = 0; $i < $indention; $i++) {
-                    $tab .= "\t";
-                }
-                $newline = "\n";
-            }
-
-            $xml = (!empty($xml)) ? $xml : '';
-            if (is_array($value)) {
-                $xml .= "$tab<$tag index=\"".$key."\">$newline".$this->array2xml($value, $pretty, ++$indention)."$tab</$tag>$newline";
-                $indention--;
-            } else {
-                $xml .= "$tab<$tag>".$value."</$tag>$newline";
-            }
-        }
-
-        return $xml;
     }
 
     private $codes = array(

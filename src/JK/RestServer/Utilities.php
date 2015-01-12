@@ -87,4 +87,34 @@ class Utilities
             return $data;
         }
     }
+
+    /**
+     * Auxiliary method to help converting a PHP array into a XML representation.
+     *
+     * This XML representation is one of various possible representation. If
+     * you want to alter the XML representation you should subclass RestServer
+     * and implement array2xml by yourself.
+     *
+     * @access protected
+     * @param  array      $data      PHP array
+     * @param  bool       $pretty    If set, the output have line breaks and proper indention
+     * @param  int|string $indention Don't set this by yourself, it's for recursive calls
+     * @return string     XML representation
+     */
+    public static function arrayToXml(array $data)
+    {
+        $xml = '';
+        foreach ($data as $key => $value) {
+            $tag = (is_numeric($key)) ? 'item' : $key;
+
+            $xml = (!empty($xml)) ? $xml : '';
+            if (is_array($value)) {
+                $xml .= "<$tag index=\"".$key."\">".self::arrayToXml($value)."</$tag>";
+            } else {
+                $xml .= "<$tag>".$value."</$tag>";
+            }
+        }
+
+        return $xml;
+    }
 }

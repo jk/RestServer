@@ -157,4 +157,53 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('key2', $array['key1']);
         $this->assertEquals('value2', $array['key1']['key2']);
     }
+
+    public function testArrayToXmlWithEmptyArray()
+    {
+        $array = array();
+
+        $xml = Utilities::arrayToXml($array);
+
+        $this->assertEquals('', $xml);
+    }
+
+    protected function parseXmlString($xml)
+    {
+        $tmp  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
+        $tmp .= "<result>".$xml.'</result>';
+        return simplexml_load_string($tmp);
+    }
+
+    public function testArrayToXmlWithStringArray()
+    {
+        $array = array('one', 'two');
+
+        $xml = Utilities::arrayToXml($array);
+        $obj = $this->parseXmlString($xml);
+
+        $this->assertObjectHasAttribute('item', $obj);
+        $this->assertEquals(2, count($obj->item)); // can't use assertCount here, since it's not an array
+        $this->assertEquals($array[0], $obj->item[0]);
+        $this->assertEquals($array[1], $obj->item[1]);
+    }
+
+    public function testArrayToXmlWithNestedArray()
+    {
+        $array = array(
+            'key1' => 'value1',
+            'key2' => array(
+                'key3' => 'value2'
+            )
+        );
+
+        $xml = Utilities::arrayToXml($array);
+        $obj = $this->parseXmlString($xml);
+
+        $this->assertObjectHasAttribute('key1', $obj);
+        $this->assertObjectHasAttribute('key2', $obj);
+        $this->assertObjectHasAttribute('key3', $obj->key2);
+
+        $this->assertEquals($array['key1'], $obj->key1);
+        $this->assertEquals($array['key2']['key3'], $obj->key2->key3);
+    }
 }
