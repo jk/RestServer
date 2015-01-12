@@ -26,7 +26,6 @@
 namespace JK\RestServer;
 
 use Exception;
-use GeSHi;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionObject;
@@ -495,19 +494,7 @@ class RestServer
             }
         }
 
-        if ($this->mode == 'debug' && $this->getFormat() == RestFormat::HTML && is_readable(__DIR__.'/geshi.php')) {
-            $geshi = new GeSHi($data, 'javascript');
-            $geshi->enable_classes();
-
-            $stylesheet = $geshi->get_stylesheet(true);
-            $pretty_output = $geshi->parse_code();
-            $title = $this->getFormat().": ".$this->getPath();
-
-            echo "<html><head><title>${title}</title><style type=\"text/css\"><!--\n${stylesheet}//--></style></head><body>${pretty_output}</body></html>";
-            unset($geshi);
-        } else {
-            echo $data;
-        }
+        echo $data;
     }
 
     public function setStatus($code)
