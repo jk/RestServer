@@ -91,14 +91,10 @@ class Utilities
     /**
      * Auxiliary method to help converting a PHP array into a XML representation.
      *
-     * This XML representation is one of various possible representation. If
-     * you want to alter the XML representation you should subclass RestServer
-     * and implement array2xml by yourself.
+     * This XML representation is one of various possible representation.
      *
      * @access protected
      * @param  array      $data      PHP array
-     * @param  bool       $pretty    If set, the output have line breaks and proper indention
-     * @param  int|string $indention Don't set this by yourself, it's for recursive calls
      * @return string     XML representation
      */
     public static function arrayToXml(array $data)
