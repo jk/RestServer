@@ -13,7 +13,6 @@ class Format extends \SplEnum
 
     const PLAIN = 'text/plain';
     const HTML = 'text/html';
-    const AMF = 'application/x-amf';
     const JSON = 'application/json';
     const JSONP = 'application/json-p';
     const XML = 'application/xml';

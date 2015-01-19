@@ -26,7 +26,6 @@
 namespace JK\RestServer;
 
 use Exception;
-use GeSHi;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionObject;
@@ -147,14 +146,12 @@ class RestServer
                 if (empty($keys['noAuth'])) {
                     if (method_exists($this, 'doServerWideAuthorization')) {
                         if (!$this->doServerWideAuthorization()) {
-                            exit; // stop here to prevent unauthorized access to any output
+                            $this->unauthorized(false);
                         }
                     } elseif (method_exists($obj, 'authorize')) {
                         // Standard behaviour
                         if (!$obj->authorize()) {
                             $this->unauthorized(false);
-                            $this->sendData('');
-                            exit;
                         }
                     }
                 }
@@ -424,8 +421,6 @@ class RestServer
         $override = isset($_GET['format']) ? $_GET['format'] : $override;
         if (isset(RestFormat::$formats[$override])) {
             $format = RestFormat::$formats[$override];
-        } elseif (in_array(RestFormat::AMF, $accept)) {
-            $format = RestFormat::AMF;
         } elseif (in_array(RestFormat::JSON, $accept)) {
             $format = RestFormat::JSON;
         } elseif (in_array(RestFormat::JSONP, $accept)) {
@@ -463,12 +458,6 @@ class RestServer
             } else {
                 throw new RestException(500, 'Content-Type not supported');
             }
-        } elseif ($this->format == RestFormat::AMF) {
-            require_once 'Zend/Amf/Parse/InputStream.php';
-            require_once 'Zend/Amf/Parse/Amf3/Deserializer.php';
-            $stream = new Zend_Amf_Parse_InputStream($data);
-            $deserializer = new Zend_Amf_Parse_Amf3_Deserializer($stream);
-            $data = $deserializer->readTypeMarker();
         } else {
             $data = Utilities::objectToArray(json_decode($data));
         }
@@ -482,16 +471,9 @@ class RestServer
         header("Expires: 0");
         header('Content-Type: '.$this->format);
 
-        if ($this->format == RestFormat::AMF) {
-            require_once 'Zend/Amf/Parse/OutputStream.php';
-            require_once 'Zend/Amf/Parse/Amf3/Serializer.php';
-            $stream = new Zend_Amf_Parse_OutputStream();
-            $serializer = new Zend_Amf_Parse_Amf3_Serializer($stream);
-            $serializer->writeTypeMarker($data);
-            $data = $stream->getStream();
-        } elseif ($this->format == RestFormat::XML) {
+        if ($this->format == RestFormat::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-            $output .= "<result>".$this->array2xml($data).'</result>';
+            $output .= "<result>".Utilities::arrayToXml($data).'</result>';
             $data = $output;
             unset($output);
         } else {
@@ -502,9 +484,6 @@ class RestServer
                 }
             }
             $data = json_encode($data);
-            if ($data && $this->mode == 'debug') {
-                $data = $this->json_format($data);
-            }
 
             if ($this->format == RestFormat::JSONP) {
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
@@ -515,19 +494,7 @@ class RestServer
             }
         }
 
-        if ($this->mode == 'debug' && $this->getFormat() == RestFormat::HTML && is_readable(__DIR__.'/geshi.php')) {
-            $geshi = new GeSHi($data, 'javascript');
-            $geshi->enable_classes();
-
-            $stylesheet = $geshi->get_stylesheet(true);
-            $pretty_output = $geshi->parse_code();
-            $title = $this->getFormat().": ".$this->getPath();
-
-            echo "<html><head><title>${title}</title><style type=\"text/css\"><!--\n${stylesheet}//--></style></head><body>${pretty_output}</body></html>";
-            unset($geshi);
-        } else {
-            echo $data;
-        }
+        echo $data;
     }
 
     public function setStatus($code)
@@ -558,106 +525,6 @@ class RestServer
         $root = trim($root, '/');
         $root .= '/';
         $this->root = $root;
-    }
-
-    /**
-     * Auxiliary method to help converting a PHP array into a XML representation.
-     *
-     * This XML representation is one of various possible representation. If
-     * you want to alter the XML representation you should subclass RestServer
-     * and implement array2xml by yourself.
-     *
-     * @access protected
-     * @param  array      $data      PHP array
-     * @param  bool       $pretty    If set, the output have line breaks and proper indention
-     * @param  int|string $indention Don't set this by yourself, it's for recursive calls
-     * @return string     XML representation
-     */
-    protected function array2xml(array $data, $pretty = false, $indention = 1)
-    {
-        $xml = '';
-        foreach ($data as $key => $value) {
-            $tag = (is_numeric($key)) ? 'item' : $key;
-
-            // Make it pretty
-            $tab = '';
-            $newline = '';
-            if ($pretty) {
-                for ($i = 0; $i < $indention; $i++) {
-                    $tab .= "\t";
-                }
-                $newline = "\n";
-            }
-
-            $xml = (!empty($xml)) ? $xml : '';
-            if (is_array($value)) {
-                $xml .= "$tab<$tag index=\"".$key."\">$newline".$this->array2xml($value, $pretty, ++$indention)."$tab</$tag>$newline";
-                $indention--;
-            } else {
-                $xml .= "$tab<$tag>".$value."</$tag>$newline";
-            }
-        }
-
-        return $xml;
-    }
-
-    // Pretty print some JSON
-    private function json_format($json)
-    {
-        $tab = "  ";
-        $new_json = "";
-        $indent_level = 0;
-        $in_string = false;
-
-        $len = strlen($json);
-
-        for ($c = 0; $c < $len; $c++) {
-            $char = $json[$c];
-            switch ($char) {
-                case '{':
-                case '[':
-                    if (!$in_string) {
-                        $new_json .= $char."\n".str_repeat($tab, $indent_level+1);
-                        $indent_level++;
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case '}':
-                case ']':
-                    if (!$in_string) {
-                        $indent_level--;
-                        $new_json .= "\n".str_repeat($tab, $indent_level).$char;
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case ',':
-                    if (!$in_string) {
-                        $new_json .= ",\n".str_repeat($tab, $indent_level);
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case ':':
-                    if (!$in_string) {
-                        $new_json .= ": ";
-                    } else {
-                        $new_json .= $char;
-                    }
-                    break;
-                case '"':
-                    if (($c > 0 && $json[$c-1] != '\\') || $c == 0) {
-                        $in_string = !$in_string;
-                    }
-                    break;
-                default:
-                    $new_json .= $char;
-                    break;
-            }
-        }
-
-        return $new_json;
     }
 
     private $codes = array(

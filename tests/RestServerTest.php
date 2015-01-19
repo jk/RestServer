@@ -3,7 +3,6 @@
 
 namespace JK\RestServer\Tests;
 
-
 use JK\RestServer\RestFormat;
 use JK\RestServer\RestServer;
 

@@ -7,6 +7,9 @@
 [![Total Downloads](https://poser.pugx.org/jk/restserver/downloads.svg)](https://packagist.org/packages/jk/restserver)
 [![Latest Unstable Version](https://poser.pugx.org/jk/restserver/v/unstable.svg)](https://packagist.org/packages/jk/restserver)
 [![Dependency Status](https://www.versioneye.com/php/jk:restserver/badge.svg)](https://www.versioneye.com/php/jk:restserver/)
+[![Coverage Status](https://coveralls.io/repos/jk/RestServer/badge.png)](https://coveralls.io/r/jk/RestServer)
+[![SensioLabsInsight](https://insight.sensiolabs.com/projects/efa0c47d-3ffa-4fc8-b456-18d2edd29851/mini.png)](https://insight.sensiolabs.com/projects/efa0c47d-3ffa-4fc8-b456-18d2edd29851) 
+[![Documentation Status](https://readthedocs.org/projects/restserver/badge/?version=develop)](https://readthedocs.org/projects/restserver/?badge=develop)
 
 | Master branch | Develop branch |
 | :---: | :---: |

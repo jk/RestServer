@@ -20,6 +20,9 @@ tools:
   php_code_sniffer:
     config:
       standard: PSR2
+      
+  sensiolabs_security_checker: true
+
 
 build:
   dependencies:
