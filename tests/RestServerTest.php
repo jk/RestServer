@@ -3,6 +3,7 @@
 
 namespace JK\RestServer\Tests;
 
+use JK\RestServer\RestException;
 use JK\RestServer\RestFormat;
 use JK\RestServer\RestServer;
 
@@ -46,6 +47,29 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $result = $this->sut->getFormat();
 
         $this->assertEquals($format, $result);
+    }
+
+    /**
+     * @regression
+     * @dataProvider keyValueBodyProvider
+     */
+    public function testGetDataWithEmptyContentType($array_input_data)
+    {
+        $mock = $this->mockGetRawHttpRequestBody(json_encode($array_input_data));
+        $_SERVER['CONTENT_TYPE'] = '';
+
+        try {
+            $result = $mock->getData();
+
+            $this->assertInternalType('array', $result);
+            $this->assertCount(count($array_input_data), $result);
+            foreach ($array_input_data as $key => $value) {
+                $this->assertArrayHasKey($key, $result);
+                $this->assertEquals($value, $result[$key]);
+            }
+        } catch (RestException  $e) {
+            $this->fail('There should not be an exception thrown, when Content-Type is empty');
+        }
     }
 
     public function httpHeaderAcceptProvider()

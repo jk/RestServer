@@ -122,7 +122,11 @@ class RestServer
         $this->format = $this->getFormat();
 
         if ($this->method == 'PUT' || $this->method == 'POST' || $this->method == 'GET') {
-            $this->data = $this->getData();
+            try {
+                $this->data = $this->getData();
+            } catch (RestException $e) {
+                $this->handleError($e->getCode(), $e->getMessage());
+            }
         }
 
         list($obj, $method, $params, $this->params, $keys) = $this->findUrl();
@@ -440,7 +444,7 @@ class RestServer
     {
         $data = $this->getRawHttpRequestBody();
 
-        if (isset($_SERVER['CONTENT_TYPE'])) {
+        if (isset($_SERVER['CONTENT_TYPE']) && !empty($_SERVER['CONTENT_TYPE'])) {
             $components = preg_split('/\;\s*/', $_SERVER['CONTENT_TYPE']);
             if (in_array('application/x-www-form-urlencoded', $components)) {
                 $a = explode('&', $data);
@@ -456,7 +460,7 @@ class RestServer
             } elseif (in_array('application/json', $components)) {
                 $data = Utilities::objectToArray(json_decode($data));
             } else {
-                throw new RestException(500, 'Content-Type not supported');
+                throw new RestException(500, 'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported');
             }
         } else {
             $data = Utilities::objectToArray(json_decode($data));
