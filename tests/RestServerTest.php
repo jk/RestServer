@@ -144,6 +144,18 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @expectedException JK\RestServer\RestException
+     * @expectedExceptionMessage Content-Type "not/supported" not supported
+     * @expectedExceptionCode 500
+     */
+    public function testGetDataAsJsonWithUnsupportedContentType()
+    {
+        $_SERVER['CONTENT_TYPE'] = 'not/supported';
+
+        $this->sut->getData();
+    }
+
+    /**
      * @dataProvider keyValueBodyProvider
      */
     public function testGetDataAsJsonWithContentType(array $array_input_data)
