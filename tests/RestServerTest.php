@@ -223,7 +223,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         // /controller/action.json -> /controller/action
         $this->assertEquals('controller/action', $result);
-
     }
 
     public function requestMethodProvider()
