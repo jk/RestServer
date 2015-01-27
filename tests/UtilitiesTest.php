@@ -6,6 +6,10 @@ namespace JK\RestServer\Tests;
 use JK\RestServer\Utilities;
 use stdClass;
 
+class TestClass {
+    function method($param1, stdClass $param2) {}
+}
+
 class UtilitiesTest extends \PHPUnit_Framework_TestCase
 {
 
@@ -76,6 +80,47 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInternalType('array', $result);
         $this->assertCount(0, $result, 'An empty header value should lead to an empty result array');
+    }
+
+    public function testSortByPriorityWithAsterisc()
+    {
+        $str = '*';
+
+        $result = Utilities::sortByPriority($str);
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('*', $result);
+        $this->assertEquals(1, $result['*']);
+    }
+
+    public function testSortByPriorityWithAsteriscAndOtherValues()
+    {
+        $str = 'de,*;q=.75';
+
+        $result = Utilities::sortByPriority($str);
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('de', $result);
+        $this->assertArrayHasKey('*', $result);
+        $this->assertEquals(1, $result['de']);
+        $this->assertEquals(.75, $result['*']);
+    }
+
+    public function testSortByPriorityWithChromeAcceptLanguageString()
+    {
+        $str = 'de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4';
+
+        $result = Utilities::sortByPriority($str);
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('de-de', $result);
+        $this->assertArrayHasKey('de', $result);
+        $this->assertArrayHasKey('en-us', $result);
+        $this->assertArrayHasKey('en', $result);
+        $this->assertEquals(1, $result['de-de']);
+        $this->assertEquals(.8, $result['de']);
+        $this->assertEquals(.6, $result['en-us']);
+        $this->assertEquals(.4, $result['en']);
     }
 
     public function testSimpleArrayToObject()
@@ -205,5 +250,33 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($array['key1'], $obj->key1);
         $this->assertEquals($array['key2']['key3'], $obj->key2->key3);
+    }
+
+    public function testReflectionClassFromObjectOrClassWithObject()
+    {
+        $object = new stdClass();
+
+        $result = Utilities::reflectionClassFromObjectOrClass($object);
+
+        $this->assertInstanceOf('ReflectionClass', $result);
+        $this->assertEquals('stdClass', $result->getName());
+    }
+
+    public function testReflectionClassFromObjectOrClassWithClassName()
+    {
+        $result = Utilities::reflectionClassFromObjectOrClass('stdClass');
+
+        $this->assertInstanceOf('ReflectionClass', $result);
+        $this->assertEquals('stdClass', $result->getName());
+    }
+
+    public function testGetPositionsOfParameterWithTypeHint()
+    {
+        $test_class = new TestClass();
+        $result = Utilities::getPositionsOfParameterWithTypeHint($test_class, 'method', 'stdClass');
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('param2', $result);
+        $this->assertEquals(1, $result['param2']);
     }
 }
