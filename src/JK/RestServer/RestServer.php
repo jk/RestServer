@@ -172,9 +172,6 @@ class RestServer
                 throw new Exception('Invalid method or class; must be a classname or object');
             }
 
-            // Prefix basePath with root (if it's null, that's not a problem)
-            // $basePath = $this->root . ltrim($basePath, '/');
-
             // Kill the leading slash
             $basePath = ltrim($basePath, '/');
 
@@ -378,8 +375,6 @@ class RestServer
         if ($path[strlen($path) - 1] == '/') {
             $path = substr($path, 0, -1);
         }
-        // remove root from path
-        // if ($this->root) $path = str_replace($this->root, '', $path);
 
         // remove trailing format definition, like /controller/action.json -> /controller/action
         $path = preg_replace('/\.(\w+)$/i', '', $path);

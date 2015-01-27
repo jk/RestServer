@@ -26,7 +26,7 @@ class Language
         $this->setSupportedLangauges($supported_languages);
         $this->setDefaultLanguage(trim($default_langauge));
 
-        if ($accepted_languages_string != null) {
+        if ($accepted_languages_string !== null) {
             $this->parseAcceptLanguageRequestHeader($accepted_languages_string);
         }
     }
