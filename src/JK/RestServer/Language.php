@@ -83,7 +83,7 @@ class Language
      */
     public function getClientAcceptedLanguages()
     {
-        if ($this->client_accepted_languages == null) {
+        if ($this->client_accepted_languages === null) {
             return array();
         }
         return $this->client_accepted_languages;
