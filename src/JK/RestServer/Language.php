@@ -67,7 +67,7 @@ class Language
     {
         $negotiated_langauges = array();
 
-        foreach ($this->client_accepted_languages as $language => $quality) {
+        foreach ($this->getClientAcceptedLanguages() as $language => $quality) {
             foreach ($this->supported_langauges as $supported) {
                 if (strcasecmp($supported, $language) == 0) {
                     $negotiated_langauges[] = array($language, $quality);
@@ -83,6 +83,9 @@ class Language
      */
     public function getClientAcceptedLanguages()
     {
+        if ($this->client_accepted_languages == null) {
+            return array();
+        }
         return $this->client_accepted_languages;
     }
 

@@ -82,6 +82,19 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('fr', $result);
     }
 
+    public function testGetClientAcceptedLanguagesWithEmptyString()
+    {
+        $supported_languages = array();
+        $default_langauge = 'de';
+        $accepted_languages_string = null;
+        $language = new Language($supported_languages, $default_langauge, $accepted_languages_string);
+
+        $result = $language->getClientAcceptedLanguages();
+
+        $this->assertInternalType('array', $result);
+        $this->assertCount(0, $result);
+    }
+
     public function testNegotiatedLanguages()
     {
         $language = new Language($this->supported_languages, $this->default_language, $this->chrome_accept_language);
