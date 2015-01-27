@@ -146,9 +146,16 @@ class RestServer
                     }
                 }
 
-                $params = $this->injectLanguageIntoMethodParameters($obj, $method, $params);
+                $language = new Language(
+                    $this->supported_languages,
+                    $this->default_language,
+                    $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+                $params = $this->injectLanguageIntoMethodParameters($language, $obj, $method, $params);
 
                 $result = call_user_func_array(array($obj, $method), $params);
+
+                $this->automaticContentLanguageHeaderDispatch($language);
+
             } catch (RestException $e) {
                 $this->handleError($e->getCode(), $e->getMessage());
             }
@@ -584,12 +591,10 @@ class RestServer
      * @param $params
      * @return mixed
      */
-    protected function injectLanguageIntoMethodParameters($obj, $method, $params)
+    protected function injectLanguageIntoMethodParameters(Language $language, $obj, $method, $params)
     {
         $position_of_language_parameter = Utilities::getPositionsOfParameterWithTypeHint($obj, $method, 'JK\RestServer\Language');
         if (count($position_of_language_parameter) > 0) {
-            $language = new Language($this->supported_languages, $this->default_language, $_SERVER['HTTP_ACCEPT_LANGUAGE']);
-
             foreach ($position_of_language_parameter as $var_name => $position) {
                 $params[$position] = $language;
                 unset($params[$var_name]);
@@ -597,5 +602,28 @@ class RestServer
             return $params;
         }
         return $params;
+    }
+
+    /**
+     * Makes sure that a "Content-Language" header is sent if not already sent (i.e. from the RestServer client code)
+     *
+     * @param Language $language Language object
+     */
+    protected function automaticContentLanguageHeaderDispatch(Language $language)
+    {
+        $headers_sent = headers_list();
+        $content_language_header_sent = false;
+        foreach ($headers_sent as $header) {
+            $header_components = explode(': ', $header);
+            $header_name = $header_components[0];
+
+            if (strcasecmp($header_name, 'content-language') == 0) {
+                $content_language_header_sent = true;
+            }
+        }
+
+        if ($content_language_header_sent === false) {
+            header('Content-Language: ' . $language->getPreferedLanguage());
+        }
     }
 }
