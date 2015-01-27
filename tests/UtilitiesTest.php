@@ -82,6 +82,47 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $result, 'An empty header value should lead to an empty result array');
     }
 
+    public function testSortByPriorityWithAsterisc()
+    {
+        $str = '*';
+
+        $result = Utilities::sortByPriority($str);
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('*', $result);
+        $this->assertEquals(1, $result['*']);
+    }
+
+    public function testSortByPriorityWithAsteriscAndOtherValues()
+    {
+        $str = 'de,*;q=.75';
+
+        $result = Utilities::sortByPriority($str);
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('de', $result);
+        $this->assertArrayHasKey('*', $result);
+        $this->assertEquals(1, $result['de']);
+        $this->assertEquals(.75, $result['*']);
+    }
+
+    public function testSortByPriorityWithChromeAcceptLanguageString()
+    {
+        $str = 'de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4';
+
+        $result = Utilities::sortByPriority($str);
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('de-de', $result);
+        $this->assertArrayHasKey('de', $result);
+        $this->assertArrayHasKey('en-us', $result);
+        $this->assertArrayHasKey('en', $result);
+        $this->assertEquals(1, $result['de-de']);
+        $this->assertEquals(.8, $result['de']);
+        $this->assertEquals(.6, $result['en-us']);
+        $this->assertEquals(.4, $result['en']);
+    }
+
     public function testSimpleArrayToObject()
     {
         $array = array(
