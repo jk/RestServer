@@ -265,7 +265,9 @@ class RestServer
                     return $call;
                 }
             } else {
+                // Don't know what's that for: "/$something..." => "/$something"
                 $regex = preg_replace('/\\\\\$([\w\d]+)\.\.\./', '(?P<$1>.+)', str_replace('\.\.\.', '...', preg_quote($url)));
+                // Find named parameters in URL /$something => $matches['something'] = $something
                 $regex = preg_replace('/\\\\\$([\w\d]+)/', '(?P<$1>[^\/]+)', $regex);
                 if (preg_match(":^$regex$:", urldecode($this->url), $matches)) {
                     $params = array();
