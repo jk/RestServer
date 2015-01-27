@@ -51,6 +51,10 @@ class RestServer
     protected $errorClasses = array();
     protected $cached;
     protected $data;
+    /** @var array Supported Languages */
+    protected $supported_languages = array();
+    /** @var string Default Language */
+    protected $default_language = 'en';
 
     /**
      * The constructor.
@@ -65,22 +69,6 @@ class RestServer
         $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
     }
 
-    /**
-     * @param  object|string                    $object_or_class Object (instance of a class) or class name
-     * @return ReflectionClass|ReflectionObject
-     */
-    protected static function reflectionFromObjectOrClass($object_or_class)
-    {
-        $reflection = null;
-
-        if (is_object($object_or_class)) {
-            $reflection = new ReflectionObject($object_or_class);
-        } elseif (class_exists($object_or_class)) {
-            $reflection = new ReflectionClass($object_or_class);
-        }
-
-        return $reflection;
-    }
 
     /**
      * @return string
@@ -160,6 +148,8 @@ class RestServer
                     }
                 }
 
+                $params = $this->injectLanguageIntoMethodParameters($obj, $method, $params);
+
                 $result = call_user_func_array(array($obj, $method), $params);
             } catch (RestException $e) {
                 $this->handleError($e->getCode(), $e->getMessage());
@@ -208,7 +198,7 @@ class RestServer
     {
         $method = "handle$statusCode";
         foreach ($this->errorClasses as $class) {
-            $reflection = self::reflectionFromObjectOrClass($class);
+            $reflection = Utilities::reflectionClassFromObjectOrClass($class);
 
             if (isset($reflection) && $reflection->hasMethod($method)) {
                 $obj = is_string($class) ? new $class() : $class;
@@ -275,7 +265,9 @@ class RestServer
                     return $call;
                 }
             } else {
+                // Don't know what's that for: "/$something..." => "/$something"
                 $regex = preg_replace('/\\\\\$([\w\d]+)\.\.\./', '(?P<$1>.+)', str_replace('\.\.\.', '...', preg_quote($url)));
+                // Find named parameters in URL /$something => $matches['something'] = $something
                 $regex = preg_replace('/\\\\\$([\w\d]+)/', '(?P<$1>[^\/]+)', $regex);
                 if (preg_match(":^$regex$:", urldecode($this->url), $matches)) {
                     $params = array();
@@ -317,7 +309,7 @@ class RestServer
 
     protected function generateMap($class, $basePath)
     {
-        $reflection = self::reflectionFromObjectOrClass($class);
+        $reflection = Utilities::reflectionClassFromObjectOrClass($class);
 
         if (isset($reflection)) {
             $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
@@ -567,4 +559,50 @@ class RestServer
         '501' => 'Not Implemented',
         '503' => 'Service Unavailable',
     );
+
+    /**
+     * Set the supported languages.
+     *
+     * If the client states via the "Accept-Language" header multiple languages, the server chooses the best match
+     * from its supported languages
+     *
+     * @param array $supported_languages Supported Languages
+     * @see http://tools.ietf.org/html/bcp47
+     */
+    public function setSupportedLanguages($supported_languages)
+    {
+        $this->supported_languages = $supported_languages;
+    }
+
+    /**
+     * Set the default language in case the server can not determinie the client's language
+     *
+     * @param string $default_language
+     * @see http://tools.ietf.org/html/bcp47
+     */
+    public function setDefaultLanguage($default_language)
+    {
+        $this->default_language = $default_language;
+    }
+
+    /**
+     * @param $obj
+     * @param $method
+     * @param $params
+     * @return mixed
+     */
+    protected function injectLanguageIntoMethodParameters($obj, $method, $params)
+    {
+        $position_of_language_parameter = Utilities::getPositionsOfParameterWithTypeHint($obj, $method, 'JK\RestServer\Language');
+        if (count($position_of_language_parameter) > 0) {
+            $language = new Language($this->supported_languages, $this->default_language, $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+
+            foreach ($position_of_language_parameter as $var_name => $position) {
+                $params[$position] = $language;
+                unset($params[$var_name]);
+            }
+            return $params;
+        }
+        return $params;
+    }
 }
