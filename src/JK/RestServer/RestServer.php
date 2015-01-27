@@ -26,9 +26,7 @@
 namespace JK\RestServer;
 
 use Exception;
-use ReflectionClass;
 use ReflectionMethod;
-use ReflectionObject;
 
 /**
  * Description of RestServer
