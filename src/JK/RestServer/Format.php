@@ -9,8 +9,6 @@ namespace JK\RestServer;
 
 class Format extends \SplEnum
 {
-    const __DEFAULT = self::JSON;
-
     const PLAIN = 'text/plain';
     const HTML = 'text/html';
     const JSON = 'application/json';

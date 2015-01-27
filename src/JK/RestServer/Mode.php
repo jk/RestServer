@@ -9,8 +9,6 @@ namespace JK\RestServer;
 
 class Mode extends \SplEnum
 {
-    const __DEFAULT = self::PRODUCTION;
-
     const DEBUG = 'debug';
     const PRODUCTION = 'production';
 }
