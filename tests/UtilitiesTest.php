@@ -6,8 +6,11 @@ namespace JK\RestServer\Tests;
 use JK\RestServer\Utilities;
 use stdClass;
 
-class TestClass {
-    function method($param1, stdClass $param2) {}
+class TestClass
+{
+    public function method($param1, stdClass $param2)
+    {
+    }
 }
 
 class UtilitiesTest extends \PHPUnit_Framework_TestCase

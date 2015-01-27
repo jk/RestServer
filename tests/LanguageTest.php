@@ -3,10 +3,10 @@
 
 namespace JK\RestServer\Tests;
 
-
 use JK\RestServer\Language;
 
-class LanguageTest extends \PHPUnit_Framework_TestCase {
+class LanguageTest extends \PHPUnit_Framework_TestCase
+{
 
     protected $supported_languages = array('en', 'de');
     protected $default_language = 'en';
@@ -60,7 +60,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase {
         $result = $language->getSupportedLangauges();
 
         $this->assertInternalType('array', $result);
-        for($i = 0; $i < count($supported_languages); $i++) {
+        for ($i = 0; $i < count($supported_languages); $i++) {
             $expected_language = $supported_languages[$i];
             $actual_language = $result[$i];
             $this->assertEquals($expected_language, $actual_language);

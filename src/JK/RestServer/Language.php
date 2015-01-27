@@ -21,7 +21,8 @@ class Language
     /** @var string Default Language */
     protected $default_language;
 
-    public function __construct(array $supported_languages, $default_langauge = 'en', $accepted_languages_string = null) {
+    public function __construct(array $supported_languages, $default_langauge = 'en', $accepted_languages_string = null)
+    {
         $this->setSupportedLangauges($supported_languages);
         $this->setDefaultLanguage(trim($default_langauge));
 
@@ -30,14 +31,16 @@ class Language
         }
     }
 
-    public function parseAcceptLanguageRequestHeader($accept_language_string) {
+    public function parseAcceptLanguageRequestHeader($accept_language_string)
+    {
         $this->client_accepted_languages = Utilities::sortByPriority($accept_language_string);
     }
 
     /**
      * @return string first negoiated language, otherwise default language
      */
-    public function getPreferedLanguage() {
+    public function getPreferedLanguage()
+    {
         $negotiated_languages = $this->getNegotiatedLangauges();
 
         if (count($negotiated_languages) > 0) {

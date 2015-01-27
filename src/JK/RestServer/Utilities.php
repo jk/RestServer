@@ -152,7 +152,7 @@ class Utilities
         /** @var ReflectionParameter $parameter */
         foreach ($reflection_parameters as $parameter) {
             $type_hint = '';
-            if(isset($parameter->getClass()->name)) {
+            if (isset($parameter->getClass()->name)) {
                 $type_hint = $parameter->getClass()->name;
             }
 
