@@ -6,6 +6,10 @@ namespace JK\RestServer\Tests;
 use JK\RestServer\Utilities;
 use stdClass;
 
+class TestClass {
+    function method($param1, stdClass $param2) {}
+}
+
 class UtilitiesTest extends \PHPUnit_Framework_TestCase
 {
 
@@ -205,5 +209,33 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($array['key1'], $obj->key1);
         $this->assertEquals($array['key2']['key3'], $obj->key2->key3);
+    }
+
+    public function testReflectionClassFromObjectOrClassWithObject()
+    {
+        $object = new stdClass();
+
+        $result = Utilities::reflectionClassFromObjectOrClass($object);
+
+        $this->assertInstanceOf('ReflectionClass', $result);
+        $this->assertEquals('stdClass', $result->getName());
+    }
+
+    public function testReflectionClassFromObjectOrClassWithClassName()
+    {
+        $result = Utilities::reflectionClassFromObjectOrClass('stdClass');
+
+        $this->assertInstanceOf('ReflectionClass', $result);
+        $this->assertEquals('stdClass', $result->getName());
+    }
+
+    public function testGetPositionsOfParameterWithTypeHint()
+    {
+        $test_class = new TestClass();
+        $result = Utilities::getPositionsOfParameterWithTypeHint($test_class, 'method', 'stdClass');
+
+        $this->assertInternalType('array', $result);
+        $this->assertArrayHasKey('param2', $result);
+        $this->assertEquals(1, $result['param2']);
     }
 }

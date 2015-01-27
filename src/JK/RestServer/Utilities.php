@@ -3,6 +3,10 @@
 
 namespace JK\RestServer;
 
+use ReflectionClass;
+use ReflectionObject;
+use ReflectionParameter;
+
 class Utilities
 {
     /**
@@ -112,5 +116,51 @@ class Utilities
         }
 
         return $xml;
+    }
+
+    /**
+     * @param  object|string $object_or_class Object (instance of a class) or class name
+     * @return ReflectionClass
+     */
+    public static function reflectionClassFromObjectOrClass($object_or_class)
+    {
+        $reflection = null;
+
+        if (is_object($object_or_class)) {
+            $reflection = new ReflectionObject($object_or_class);
+        } elseif (class_exists($object_or_class)) {
+            $reflection = new ReflectionClass($object_or_class);
+        }
+
+        return $reflection;
+    }
+
+    /**
+     * @param object $obj Class object
+     * @param string $method Class method
+     * @param string $type_hint_class Class name of the type hint
+     * @return array Position of parameters of type $type_hint_class
+     */
+    public static function getPositionsOfParameterWithTypeHint($obj, $method, $type_hint_class)
+    {
+        $reflection_class = Utilities::reflectionClassFromObjectOrClass($obj);
+        $reflection_method = $reflection_class->getMethod($method);
+        $reflection_parameters = $reflection_method->getParameters();
+
+        $positions = array();
+
+        /** @var ReflectionParameter $parameter */
+        foreach ($reflection_parameters as $parameter) {
+            $type_hint = '';
+            if(isset($parameter->getClass()->name)) {
+                $type_hint = $parameter->getClass()->name;
+            }
+
+            if ($type_hint == $type_hint_class) {
+                $positions[$parameter->name] = $parameter->getPosition();
+            }
+        }
+
+        return $positions;
     }
 }
