@@ -86,6 +86,7 @@ class Language
         if ($this->client_accepted_languages === null) {
             return array();
         }
+
         return $this->client_accepted_languages;
     }
 
