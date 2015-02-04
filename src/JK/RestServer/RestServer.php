@@ -42,6 +42,7 @@ class RestServer
     public $format;
     public $cacheDir = '.';
     public $realm;
+    /** @var Mode|string Operation mode, can be one of [debug, production] */
     public $mode;
     protected $root;
 
@@ -57,11 +58,14 @@ class RestServer
     /**
      * The constructor.
      *
-     * @param string $mode  The mode, either debug or production
+     * @param Mode|string $mode Operation mode, can be one of [debug, production]
      * @param string $realm Can be debug or production
      */
-    public function __construct($mode = 'debug', $realm = 'Rest Server')
+    public function __construct(Mode $mode = null, $realm = 'Rest Server')
     {
+        if ($mode === null) {
+            $mode = Mode::PRODUCTION;
+        }
         $this->mode = $mode;
         $this->realm = $realm;
         $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
@@ -78,7 +82,7 @@ class RestServer
 
     public function __destruct()
     {
-        if ($this->mode == 'production' && !$this->cached) {
+        if ($this->mode == Mode::PRODUCTION && !$this->cached) {
             if (function_exists('apc_store')) {
                 apc_store('urlMap', $this->map);
             } else {
@@ -210,7 +214,7 @@ class RestServer
             }
         }
 
-        $message = $this->codes[$statusCode].($errorMessage && $this->mode == 'debug' ? ': '.$errorMessage : '');
+        $message = $this->codes[$statusCode].($errorMessage && $this->mode == Mode::DEBUG ? ': '.$errorMessage : '');
 
         $this->setStatus($statusCode);
         $this->sendData(array('error' => array('code' => $statusCode, 'message' => $message)));
@@ -224,7 +228,7 @@ class RestServer
 
         $this->cached = false;
 
-        if ($this->mode == 'production') {
+        if ($this->mode == Mode::PRODUCTION) {
             if (function_exists('apc_fetch')) {
                 $map = apc_fetch('urlMap');
             } elseif (file_exists($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache')) {
