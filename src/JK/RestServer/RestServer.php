@@ -60,12 +60,12 @@ class RestServer
     /**
      * The constructor.
      *
-     * @param Mode|string $mode Operation mode, can be one of [debug, production]
+     * @param string $mode Operation mode, can be one of [debug, production]
      * @param string $realm Can be debug or production
      */
-    public function __construct(Mode $mode = null, $realm = 'Rest Server')
+    public function __construct($mode = Mode::PRODUCTION, $realm = 'Rest Server')
     {
-        if ($mode === null) {
+        if (!in_array($mode, array(Mode::PRODUCTION, Mode::DEBUG))) {
             $mode = Mode::PRODUCTION;
         }
         $this->mode = $mode;

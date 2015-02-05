@@ -3,6 +3,7 @@
 
 namespace JK\RestServer\Tests;
 
+use JK\RestServer\Mode;
 use JK\RestServer\RestException;
 use JK\RestServer\Format;
 use JK\RestServer\RestServer;
@@ -35,6 +36,39 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function tearDown()
     {
         unset($this->sut);
+    }
+
+    /**
+     * @covers ::__construct
+     */
+    public function testConstructor()
+    {
+        $result = new RestServer();
+
+        $this->assertInstanceOf('\JK\RestServer\RestServer', $result);
+        $this->assertEquals(Mode::PRODUCTION, $result->mode);
+    }
+
+    /**
+     * @covers ::__construct
+     */
+    public function testConstructorInDebugMode()
+    {
+        $result = new RestServer(Mode::DEBUG);
+
+        $this->assertInstanceOf('\JK\RestServer\RestServer', $result);
+        $this->assertEquals(Mode::DEBUG, $result->mode);
+    }
+
+    /**
+     * @covers ::__construct
+     */
+    public function testConstructorInProductionMode()
+    {
+        $result = new RestServer(Mode::PRODUCTION);
+
+        $this->assertInstanceOf('\JK\RestServer\RestServer', $result);
+        $this->assertEquals(Mode::PRODUCTION, $result->mode);
     }
 
     public function requestUriProvider()
