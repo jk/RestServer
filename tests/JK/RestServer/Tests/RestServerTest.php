@@ -79,6 +79,9 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     {
         return array(
             array('application/json', RestFormat::JSON),
+            array('application/json;q=1,application/xml;q=.5', RestFormat::JSON),
+            array('application/json,application/xml;q=.5', RestFormat::JSON),
+            array('application/json,application/xml', RestFormat::JSON),
             array('application/json-p', RestFormat::JSONP),
             array('text/html', RestFormat::HTML),
             array('text/plain', RestFormat::PLAIN),

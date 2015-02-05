@@ -40,6 +40,28 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * @regression
+     */
+    public function testSortByPriorityWithEqualValuesAndReverseLexigraphicalOrder()
+    {
+        $accept_str = 'a,x';
+
+        $result = Utilities::sortByPriority($accept_str);
+
+        $this->assertInternalType('array', $result);
+
+        $results = array();
+        foreach ($result as $type => $quality) {
+            $results[] = $type;
+        }
+
+        $this->assertEquals('a', $results[0], 'First element should be a, but is: ' . $results[0]);
+        $this->assertEquals('x', $results[1], 'Last element should be x, but is: ' . $results[1]);
+
+
+    }
+
     public function testSortByPriorityWithOnlyOneElementWithoutQuality()
     {
         $accept_language_str = 'de';
