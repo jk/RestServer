@@ -102,6 +102,25 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($format, $result);
     }
 
+    public function testGetFormatViaUrl()
+    {
+        $_SERVER['REQUEST_URI'] = '/controller.text/action.json?key=/value.xml';
+
+        $result = $this->sut->getFormat();
+
+        $this->assertEquals(RestFormat::JSON, $result);
+    }
+
+    public function testGetFormatViaWrongUrl()
+    {
+        // We can't have a '?' in the middle of an URL
+        $_SERVER['REQUEST_URI'] = '/controller.text?/action.json?key=/value.xml';
+
+        $result = $this->sut->getFormat();
+
+        $this->assertNotEquals(RestFormat::JSON, $result);
+    }
+
     public function keyValueBodyProvider()
     {
         return array(
