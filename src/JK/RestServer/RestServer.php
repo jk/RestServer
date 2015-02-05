@@ -398,39 +398,42 @@ class RestServer
         return $_SERVER['REQUEST_METHOD'];
     }
 
+
+    /**
+     * Determine the requested format by the API client
+     *
+     * We have basically two ways requesting an output format
+     * 1. The client tells us the requsted format within the URL like /controller/action.format
+     * 2. The client send the Accept: header
+     *
+     * The order is important only if the client specifies both. If so, the 1. varient (the URL dot syntax)
+     * has precedence
+     *
+     * @return RestFormat|string Client requested output format
+     */
     public function getFormat()
     {
         $format = RestFormat::PLAIN;
-        $accept_mod = (isset($_SERVER['HTTP_ACCEPT'])) ? preg_replace('/\s+/i', '', $_SERVER['HTTP_ACCEPT']) : '';
-        $accept = explode(',', $accept_mod);
 
-        $override = '';
-        if (isset($_REQUEST['format']) || isset($_SERVER['HTTP_FORMAT'])) {
-            // give GET/POST precedence over HTTP request headers
-            $override = isset($_SERVER['HTTP_FORMAT']) ? $_SERVER['HTTP_FORMAT'] : '';
-            $override = isset($_REQUEST['format']) ? $_REQUEST['format'] : $override;
-            $override = trim($override);
+        if (isset($_SERVER['HTTP_ACCEPT'])) {
+            $accept_header = Utilities::sortByPriority($_SERVER['HTTP_ACCEPT']);
+
+            foreach ($accept_header as $mime_type => $priority) {
+                if (RestFormat::isMimeTypeSupported($mime_type)) {
+                    $format = $mime_type;
+                    break;
+                }
+            }
         }
 
         // Check for trailing dot-format syntax like /controller/action.format -> action.json
+        $override = '';
         if (preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
             $override = $matches[1];
         }
 
-        // Give GET parameters precedence before all other options to alter the format
-        $override = isset($_GET['format']) ? $_GET['format'] : $override;
-        if (isset(RestFormat::$formats[$override])) {
-            $format = RestFormat::$formats[$override];
-        } elseif (in_array(RestFormat::JSON, $accept)) {
-            $format = RestFormat::JSON;
-        } elseif (in_array(RestFormat::JSONP, $accept)) {
-            $format = RestFormat::JSONP;
-        } elseif (in_array(RestFormat::HTML, $accept)) {
-            $format = RestFormat::HTML;
-        } elseif (in_array(RestFormat::PLAIN, $accept)) {
-            $format = RestFormat::PLAIN;
-        } elseif (in_array(RestFormat::XML, $accept)) {
-            $format = RestFormat::XML;
+        if (RestFormat::getMimeTypeFromFormatAbbreviation($override)) {
+            $format = RestFormat::getMimeTypeFromFormatAbbreviation($override);
         }
 
         return $format;

@@ -28,14 +28,15 @@ namespace JK\RestServer;
 /**
  * Constants used in RestServer Class.
  */
-class RestFormat
+final class RestFormat
 {
     const PLAIN = 'text/plain';
     const HTML = 'text/html';
     const JSON = 'application/json';
     const JSONP = 'application/json-p';
     const XML = 'application/xml';
-    static public $formats = array(
+
+    protected static $formats = array(
         'plain' => RestFormat::PLAIN,
         'txt' => RestFormat::PLAIN,
         'html' => RestFormat::HTML,
@@ -43,4 +44,30 @@ class RestFormat
         'jsonp' => RestFormat::JSONP,
         'xml' => RestFormat::XML,
     );
+
+    /**
+     * Get the MIME type for a known format abbreviation
+     *
+     * @param string $format_abbreviation Supported format abbreviation (i.e. file type extension like "json" or "xml")
+     * @return bool|string MIME type
+     */
+    public static function getMimeTypeFromFormatAbbreviation($format_abbreviation)
+    {
+        if (array_key_exists($format_abbreviation, self::$formats)) {
+            return self::$formats[$format_abbreviation];
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Checks if MIME type is supported
+     *
+     * @param string $mime_type MIME type
+     * @return bool Mime type is supported
+     */
+    public static function isMimeTypeSupported($mime_type)
+    {
+        return in_array($mime_type, self::$formats);
+    }
 }
