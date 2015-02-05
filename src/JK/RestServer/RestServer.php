@@ -641,10 +641,16 @@ class RestServer
      *
      * This will be used if the client does not request any specific format.
      *
-     * @param string $format Default format
+     * @param string $mime_type Default format
+     * @return bool Setting of default format was successful
      */
-    public function setDefaultFormat(Format $format)
+    public function setDefaultFormat($mime_type)
     {
-        $this->default_format = $format;
+        if (Format::isMimeTypeSupported($mime_type)) {
+            $this->default_format = $mime_type;
+            return true;
+        } else {
+            return false;
+        }
     }
 }
