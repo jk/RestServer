@@ -46,7 +46,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @regression
+     * @group regression
      */
     public function testSortByPriorityWithEqualValuesAndReverseLexigraphicalOrder()
     {
