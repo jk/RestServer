@@ -10,30 +10,32 @@ use JK\RestServer\RestServer;
 /**
  * Class RestServerTest
  * @package JK\RestServer\Tests
- * @covers JK\RestServer\RestServer
+ * @coversDefaultClass \JK\RestServer\RestServer
  */
 class RestServerTest extends \PHPUnit_Framework_TestCase
 {
     /** @var \JK\RestServer\RestServer */
     protected $sut;
 
+    /**
+     * @coversNothing
+     */
     public function setUp()
     {
+        // @codeCoverageIgnoreStart
         $this->sut = new RestServer();
+        $this->sut->setDefaultFormat(Format::PLAIN);
+        // @codeCoverageIgnoreEnd
 
         unset($_SERVER['HTTP_ACCEPT']);
         unset($_SERVER['REQUEST_URI']);
+        unset($_SERVER['CONTENT_TYPE']);
     }
 
     public function tearDown()
     {
         unset($this->sut);
     }
-
-//    public function before()
-//    {
-//        unset($_SERVER['CONTENT_TYPE']);
-//    }
 
     public function requestUriProvider()
     {
@@ -48,6 +50,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider requestUriProvider
+     * @covers ::getFormat
      */
     public function testGetFormat($request_uri, $format)
     {
@@ -60,6 +63,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     /**
      * @regression
      * @dataProvider keyValueBodyProvider
+     * @covers ::getData
      */
     public function testGetDataWithEmptyContentType($array_input_data)
     {
@@ -96,6 +100,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider httpHeaderAcceptProvider
+     * @covers ::getFormat
      */
     public function testGetFormatViaHttpAcceptHeader($http_accept, $format)
     {
@@ -107,6 +112,9 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($format, $result);
     }
 
+    /**
+     * @covers ::getFormat
+     */
     public function testGetFormatViaUrl()
     {
         $_SERVER['REQUEST_URI'] = '/controller.text/action.json?key=/value.xml';
@@ -116,6 +124,9 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Format::JSON, $result);
     }
 
+    /**
+     * @covers ::getFormat
+     */
     public function testGetFormatViaWrongUrl()
     {
         // We can't have a '?' in the middle of an URL
@@ -140,6 +151,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider keyValueBodyProvider
+     * @covers ::getData
      */
     public function testGetDataAsWwwFormUrlencoded(array $array_input_data)
     {
@@ -157,6 +169,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider keyValueBodyProvider
+     * @covers ::getData
      */
     public function testGetDataAsJsonWithoutContentType(array $array_input_data)
     {
@@ -177,6 +190,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
      * @expectedException JK\RestServer\RestException
      * @expectedExceptionMessage Content-Type "not/supported" not supported
      * @expectedExceptionCode 500
+     * @covers ::getData
      */
     public function testGetDataAsJsonWithUnsupportedContentType()
     {
@@ -187,6 +201,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider keyValueBodyProvider
+     * @covers ::getData
      */
     public function testGetDataAsJsonWithContentType(array $array_input_data)
     {
@@ -245,6 +260,9 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         return $mock;
     }
 
+    /**
+     * @covers ::getPath
+     */
     public function testGetPath()
     {
         $_SERVER['REQUEST_URI'] = '/controller/action.json/';
@@ -268,6 +286,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider requestMethodProvider
      * @param $request_method
+     * @covers ::getMethod
      */
     public function testGetMethod($request_method)
     {
