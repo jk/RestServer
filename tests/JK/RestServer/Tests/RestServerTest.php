@@ -348,6 +348,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
      * @group integration
      * @throws \Exception
      * @runInSeparateProcess
+     * @coversNothing
      */
     public function testUrlDefaultParameters()
     {
@@ -374,6 +375,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
      * @group integration
      * @throws \Exception
      * @runInSeparateProcess
+     * @coversNothing
      */
     public function testUrlParameters()
     {
