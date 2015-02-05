@@ -341,4 +341,58 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($request_method, $result);
     }
+
+    /**
+     * @group bug004
+     * @group regression
+     * @group integration
+     * @throws \Exception
+     * @runInSeparateProcess
+     */
+    public function testUrlDefaultParameters()
+    {
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $_SERVER['REQUEST_URI'] = '/test/unorderd';
+        $_SERVER['HTTP_ACCEPT'] = Format::JSON;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+
+        ob_start();
+        $this->sut->handle();
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        $expected = array(
+            'param1' => 'default_value_1',
+            'param2' => 'default_value_2'
+        );
+
+        $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
+    }
+
+    /**
+     * @group integration
+     * @throws \Exception
+     * @runInSeparateProcess
+     */
+    public function testUrlParameters()
+    {
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $_SERVER['REQUEST_URI'] = '/test/unorderd/param1/value_1/param2/value_2';
+        $_SERVER['HTTP_ACCEPT'] = Format::JSON;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+
+        ob_start();
+        $this->sut->handle();
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        $expected = array(
+            'param1' => 'value_1',
+            'param2' => 'value_2'
+        );
+
+        $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
+    }
 }

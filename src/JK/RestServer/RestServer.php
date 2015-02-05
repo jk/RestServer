@@ -354,7 +354,10 @@ class RestServer
                     $call = array($class, $method->getName());
                     $args = array();
                     foreach ($params as $param) {
-                        $args[$param->getName()] = $param->getPosition();
+                        // The order of the parameters is essential, there is no name-matching
+                        // inserting the name is just for easier debuging
+                        $args[$param->getName()] = $param->getDefaultValue();
+
                     }
                     $call[] = $args;
                     $call[] = null;
