@@ -71,6 +71,17 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Mode::PRODUCTION, $result->mode);
     }
 
+    /**
+     * @covers ::__construct
+     */
+    public function testConstructorInNonExistentMode()
+    {
+        $result = new RestServer('non-existent');
+
+        $this->assertInstanceOf('\JK\RestServer\RestServer', $result);
+        $this->assertEquals(Mode::PRODUCTION, $result->mode);
+    }
+
     public function requestUriProvider()
     {
         return array(
