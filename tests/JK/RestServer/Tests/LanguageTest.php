@@ -5,6 +5,11 @@ namespace JK\RestServer\Tests;
 
 use JK\RestServer\Language;
 
+/**
+ * Class LanguageTest
+ * @package JK\RestServer\Tests
+ * @covers JK\RestServer\Language
+ */
 class LanguageTest extends \PHPUnit_Framework_TestCase
 {
 

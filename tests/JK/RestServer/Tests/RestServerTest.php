@@ -7,6 +7,11 @@ use JK\RestServer\RestException;
 use JK\RestServer\RestFormat;
 use JK\RestServer\RestServer;
 
+/**
+ * Class RestServerTest
+ * @package JK\RestServer\Tests
+ * @covers JK\RestServer\RestServer
+ */
 class RestServerTest extends \PHPUnit_Framework_TestCase
 {
     /** @var \JK\RestServer\RestServer */

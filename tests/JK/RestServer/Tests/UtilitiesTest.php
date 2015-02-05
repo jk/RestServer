@@ -13,6 +13,11 @@ class TestClass
     }
 }
 
+/**
+ * Class UtilitiesTest
+ * @package JK\RestServer\Tests
+ * @covers JK\RestServer\Utilities
+ */
 class UtilitiesTest extends \PHPUnit_Framework_TestCase
 {
 
