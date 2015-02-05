@@ -54,6 +54,8 @@ class RestServer
     protected $supported_languages = array();
     /** @var string Default Language */
     protected $default_language = 'en';
+    /** @var Format Default Format */
+    protected $default_format = Format::JSON;
 
     /**
      * The constructor.
@@ -413,7 +415,7 @@ class RestServer
      */
     public function getFormat()
     {
-        $format = Format::PLAIN;
+        $format = $this->default_format;
 
         if (isset($_SERVER['HTTP_ACCEPT'])) {
             $accept_header = Utilities::sortByPriority($_SERVER['HTTP_ACCEPT']);
@@ -632,5 +634,17 @@ class RestServer
         if ($content_language_header_sent === false) {
             header('Content-Language: ' . $language->getPreferedLanguage());
         }
+    }
+
+    /**
+     * Setting a default output format.
+     *
+     * This will be used if the client does not request any specific format.
+     *
+     * @param string $format Default format
+     */
+    public function setDefaultFormat(Format $format)
+    {
+        $this->default_format = $format;
     }
 }
