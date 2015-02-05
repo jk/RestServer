@@ -409,17 +409,17 @@ class RestServer
      * The order is important only if the client specifies both. If so, the 1. varient (the URL dot syntax)
      * has precedence
      *
-     * @return RestFormat|string Client requested output format
+     * @return Format|string Client requested output format
      */
     public function getFormat()
     {
-        $format = RestFormat::PLAIN;
+        $format = Format::PLAIN;
 
         if (isset($_SERVER['HTTP_ACCEPT'])) {
             $accept_header = Utilities::sortByPriority($_SERVER['HTTP_ACCEPT']);
 
             foreach ($accept_header as $mime_type => $priority) {
-                if (RestFormat::isMimeTypeSupported($mime_type)) {
+                if (Format::isMimeTypeSupported($mime_type)) {
                     $format = $mime_type;
                     break;
                 }
@@ -432,8 +432,8 @@ class RestServer
             $override = $matches[1];
         }
 
-        if (RestFormat::getMimeTypeFromFormatAbbreviation($override)) {
-            $format = RestFormat::getMimeTypeFromFormatAbbreviation($override);
+        if (Format::getMimeTypeFromFormatAbbreviation($override)) {
+            $format = Format::getMimeTypeFromFormatAbbreviation($override);
         }
 
         return $format;
@@ -474,7 +474,7 @@ class RestServer
         header("Expires: 0");
         header('Content-Type: '.$this->format);
 
-        if ($this->format == RestFormat::XML) {
+        if ($this->format == Format::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
             $output .= "<result>".Utilities::arrayToXml($data).'</result>';
             $data = $output;
@@ -488,7 +488,7 @@ class RestServer
             }
             $data = json_encode($data);
 
-            if ($this->format == RestFormat::JSONP) {
+            if ($this->format == Format::JSONP) {
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
                     $data = $_GET['callback'].'('.$data.')';
                 } else {

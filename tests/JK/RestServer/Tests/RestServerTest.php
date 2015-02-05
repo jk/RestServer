@@ -4,7 +4,7 @@
 namespace JK\RestServer\Tests;
 
 use JK\RestServer\RestException;
-use JK\RestServer\RestFormat;
+use JK\RestServer\Format;
 use JK\RestServer\RestServer;
 
 /**
@@ -38,11 +38,11 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function requestUriProvider()
     {
         return array(
-            array('/controller/action.format', RestFormat::PLAIN),
-            array('/controller/action', RestFormat::PLAIN),
-            array('/controller/action.html', RestFormat::HTML),
-            array('/controller/action.json', RestFormat::JSON),
-            array('/controller/action.xml', RestFormat::XML)
+            array('/controller/action.format', Format::PLAIN),
+            array('/controller/action', Format::PLAIN),
+            array('/controller/action.html', Format::HTML),
+            array('/controller/action.json', Format::JSON),
+            array('/controller/action.xml', Format::XML)
         );
     }
 
@@ -83,14 +83,14 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function httpHeaderAcceptProvider()
     {
         return array(
-            array('application/json', RestFormat::JSON),
-            array('application/json;q=1,application/xml;q=.5', RestFormat::JSON),
-            array('application/json,application/xml;q=.5', RestFormat::JSON),
-            array('application/json,application/xml', RestFormat::JSON),
-            array('application/json-p', RestFormat::JSONP),
-            array('text/html', RestFormat::HTML),
-            array('text/plain', RestFormat::PLAIN),
-            array('application/xml', RestFormat::XML)
+            array('application/json', Format::JSON),
+            array('application/json;q=1,application/xml;q=.5', Format::JSON),
+            array('application/json,application/xml;q=.5', Format::JSON),
+            array('application/json,application/xml', Format::JSON),
+            array('application/json-p', Format::JSONP),
+            array('text/html', Format::HTML),
+            array('text/plain', Format::PLAIN),
+            array('application/xml', Format::XML)
         );
     }
 
@@ -113,7 +113,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $result = $this->sut->getFormat();
 
-        $this->assertEquals(RestFormat::JSON, $result);
+        $this->assertEquals(Format::JSON, $result);
     }
 
     public function testGetFormatViaWrongUrl()
@@ -123,7 +123,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $result = $this->sut->getFormat();
 
-        $this->assertNotEquals(RestFormat::JSON, $result);
+        $this->assertNotEquals(Format::JSON, $result);
     }
 
     public function keyValueBodyProvider()

@@ -28,7 +28,7 @@ namespace JK\RestServer;
 /**
  * Constants used in RestServer Class.
  */
-final class RestFormat
+final class Format
 {
     const PLAIN = 'text/plain';
     const HTML = 'text/html';
@@ -37,12 +37,12 @@ final class RestFormat
     const XML = 'application/xml';
 
     protected static $formats = array(
-        'plain' => RestFormat::PLAIN,
-        'txt' => RestFormat::PLAIN,
-        'html' => RestFormat::HTML,
-        'json' => RestFormat::JSON,
-        'jsonp' => RestFormat::JSONP,
-        'xml' => RestFormat::XML,
+        'plain' => self::PLAIN,
+        'txt' => self::PLAIN,
+        'html' => self::HTML,
+        'json' => self::JSON,
+        'jsonp' => self::JSONP,
+        'xml' => self::XML,
     );
 
     /**
