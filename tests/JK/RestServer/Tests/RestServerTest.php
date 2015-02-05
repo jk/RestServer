@@ -15,6 +15,9 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->sut = new RestServer();
+
+        unset($_SERVER['HTTP_ACCEPT']);
+        unset($_SERVER['REQUEST_URI']);
     }
 
     public function tearDown()
