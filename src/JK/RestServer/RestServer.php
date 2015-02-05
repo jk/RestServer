@@ -70,7 +70,11 @@ class RestServer
         }
         $this->mode = $mode;
         $this->realm = $realm;
-        $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
+        if (php_sapi_name() !== 'cli') {
+            $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
+        } else {
+            $this->root = '/';
+        }
     }
 
 
@@ -152,10 +156,13 @@ class RestServer
                     }
                 }
 
+                $accept_language_header = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
+                    ? $_SERVER['HTTP_ACCEPT_LANGUAGE']
+                    : '';
                 $language = new Language(
                     $this->supported_languages,
                     $this->default_language,
-                    $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+                    $accept_language_header);
                 $params = $this->injectLanguageIntoMethodParameters($language, $obj, $method, $params);
 
                 $result = call_user_func_array(array($obj, $method), $params);
