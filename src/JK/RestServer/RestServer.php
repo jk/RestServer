@@ -26,6 +26,7 @@
 namespace JK\RestServer;
 
 use Exception;
+use ReflectionException;
 use ReflectionMethod;
 
 /**
@@ -297,7 +298,8 @@ class RestServer
                         }
                         $paramMap[$arg] = $match;
 
-                        if (isset($args[$arg])) {
+                        // is_null is here for the case there is no default value for a method parameter
+                        if (isset($args[$arg]) || is_null($args[$arg])) {
                             $params[$args[$arg]] = $match;
                         }
                     }
@@ -356,7 +358,12 @@ class RestServer
                     foreach ($params as $param) {
                         // The order of the parameters is essential, there is no name-matching
                         // inserting the name is just for easier debuging
-                        $args[$param->getName()] = $param->getDefaultValue();
+                        try {
+                            $args[$param->getName()] = $param->getDefaultValue();
+                        } catch (ReflectionException $e) {
+                            // If the method has no default parameter set the value to null
+                            $args[$param->getName()] = null;
+                        }
 
                     }
                     $call[] = $args;

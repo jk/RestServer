@@ -397,4 +397,30 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
+
+    /**
+     * @group regression
+     * @group integration
+     * @runInSeparateProcess
+     * @coversNothing
+     */
+    public function testAMethodWithoutDefaultParameters()
+    {
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $_SERVER['REQUEST_URI'] = '/test/without_default_parameter/value_1';
+        $_SERVER['HTTP_ACCEPT'] = Format::JSON;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+
+        ob_start();
+        $this->sut->handle();
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        $expected = array(
+            'param1' => 'value_1',
+        );
+
+        $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
+    }
 }

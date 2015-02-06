@@ -15,4 +15,14 @@ class TestApiController
     {
         return array('param1' => $param1, 'param2' => $param2);
     }
+
+    /**
+     * @url GET /without_default_parameter/$param1
+     * @param mixed $param1 Parameter 1
+     * @return array echoed param1
+     */
+    public function methodWithoutDefaultParamets($param1)
+    {
+        return array('param1' => $param1);
+    }
 }
