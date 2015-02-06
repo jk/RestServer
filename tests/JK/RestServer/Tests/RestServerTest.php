@@ -346,6 +346,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
      * @group bug004
      * @group regression
      * @group integration
+     * @group no-travis
      * @throws \Exception
      * @runInSeparateProcess
      * @coversNothing
@@ -373,6 +374,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @group integration
+     * @group no-travis
      * @throws \Exception
      * @runInSeparateProcess
      * @coversNothing
@@ -401,6 +403,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     /**
      * @group regression
      * @group integration
+     * @group no-traivs
      * @runInSeparateProcess
      * @coversNothing
      */

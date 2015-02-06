@@ -18,5 +18,5 @@ before_script:
   - travis_retry composer install --prefer-source --no-interaction --optimize-autoloader
 
 script:
-  - ./vendor/bin/phpunit --coverage-clover ./build/logs/clover.xml
+  - ./vendor/bin/phpunit --exclude-group no-travis --testdox --coverage-clover ./build/logs/clover.xml
 #  - ./vendor/bin/phpcs --standard=PSR2 ./src/ ./tests/
