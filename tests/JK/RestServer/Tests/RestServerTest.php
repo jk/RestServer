@@ -403,7 +403,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     /**
      * @group regression
      * @group integration
-     * @group no-traivs
+     * @group no-travis
      * @runInSeparateProcess
      * @coversNothing
      */
