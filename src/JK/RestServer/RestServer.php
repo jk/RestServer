@@ -109,7 +109,7 @@ class RestServer
         if ($ask) {
             header("WWW-Authenticate: Basic realm=\"$this->realm\"");
         }
-        throw new RestException(401, "You are not authorized to access this resource.");
+        throw new RestException(HttpStatusCodes::UNAUTHORIZED, "You are not authorized to access this resource.");
     }
 
     public function handle()
@@ -502,7 +502,8 @@ class RestServer
             } elseif (in_array('application/json', $components)) {
                 $data = Utilities::objectToArray(json_decode($data));
             } else {
-                throw new RestException(500, 'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported');
+                throw new RestException(HttpStatusCodes::INTERNAL_SERVER_ERROR,
+                    'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported');
             }
         } else {
             $data = Utilities::objectToArray(json_decode($data));
@@ -535,7 +536,7 @@ class RestServer
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
                     $data = $_GET['callback'].'('.$data.')';
                 } else {
-                    throw new RestException(400, 'No callback given.');
+                    throw new RestException(HttpStatusCodes::BAD_REQUEST, 'No callback given.');
                 }
             }
         }
@@ -572,43 +573,6 @@ class RestServer
         $root .= '/';
         $this->root = $root;
     }
-
-    private $codes = array(
-        '100' => 'Continue',
-        '200' => 'OK',
-        '201' => 'Created',
-        '202' => 'Accepted',
-        '203' => 'Non-Authoritative Information',
-        '204' => 'No Content',
-        '205' => 'Reset Content',
-        '206' => 'Partial Content',
-        '300' => 'Multiple Choices',
-        '301' => 'Moved Permanently',
-        '302' => 'Found',
-        '303' => 'See Other',
-        '304' => 'Not Modified',
-        '305' => 'Use Proxy',
-        '307' => 'Temporary Redirect',
-        '400' => 'Bad Request',
-        '401' => 'Unauthorized',
-        '402' => 'Payment Required',
-        '403' => 'Forbidden',
-        '404' => 'Not Found',
-        '405' => 'Method Not Allowed',
-        '406' => 'Not Acceptable',
-        '409' => 'Conflict',
-        '410' => 'Gone',
-        '411' => 'Length Required',
-        '412' => 'Precondition Failed',
-        '413' => 'Request Entity Too Large',
-        '414' => 'Request-URI Too Long',
-        '415' => 'Unsupported Media Type',
-        '416' => 'Requested Range Not Satisfiable',
-        '417' => 'Expectation Failed',
-        '500' => 'Internal Server Error',
-        '501' => 'Not Implemented',
-        '503' => 'Service Unavailable',
-    );
 
     /**
      * Set the supported languages.
