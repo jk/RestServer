@@ -147,6 +147,8 @@ class Utilities
     }
 
     /**
+     * Returns a ReflectionClass object from a living instance or a class name
+     *
      * @param  object|string $object_or_class Object (instance of a class) or class name
      * @return ReflectionClass
      */

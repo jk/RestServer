@@ -178,7 +178,7 @@ class RestServer
                 $this->sendData($result);
             }
         } else {
-            $this->handleError(404);
+            $this->handleError(HttpStatusCodes::NOT_FOUND);
         }
     }
 
@@ -210,9 +210,18 @@ class RestServer
         $this->errorClasses[] = $class;
     }
 
-    public function handleError($statusCode, $errorMessage = null)
+    /**
+     * Handles all error cases. Mostly sets a header and formats an error message to respond to the client
+     *
+     * The more detailed error message will only be returned to the user if the server is in Mode::DEBUG mode
+     *
+     * @param int $status_code HTTP status code
+     * @param string $error_message Error message, you can specify a more detailed error message
+     * @throws RestException
+     */
+    public function handleError($status_code, $error_message = null)
     {
-        $method = "handle$statusCode";
+        $method = "handle$status_code";
         foreach ($this->errorClasses as $class) {
             $reflection = Utilities::reflectionClassFromObjectOrClass($class);
 
@@ -220,14 +229,27 @@ class RestServer
                 $obj = is_string($class) ? new $class() : $class;
                 $obj->$method();
 
-                return null;
+                return;
             }
         }
 
-        $message = $this->codes[$statusCode].($errorMessage && $this->mode == Mode::DEBUG ? ': '.$errorMessage : '');
+        $description = HttpStatusCodes::getDescription($status_code);
 
-        $this->setStatus($statusCode);
-        $this->sendData(array('error' => array('code' => $statusCode, 'message' => $message)));
+        if (isset($error_message) && $this->mode == Mode::DEBUG) {
+            $message = $description . ': ' . $error_message;
+        } else {
+            $message = $description;
+        }
+
+        $output = array(
+            'error' => array(
+                'code' => $status_code,
+                'message' => $message
+            )
+        );
+
+        $this->setStatus($status_code);
+        $this->sendData($output);
     }
 
     protected function loadCache()
@@ -334,8 +356,10 @@ class RestServer
             $methods = array();
         }
 
+        /** @var ReflectionMethod $method */
         foreach ($methods as $method) {
             $doc = $method->getDocComment();
+
             if (preg_match_all('/@url[ \t]+(GET|POST|PUT|DELETE|HEAD|OPTIONS)[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
                 $params = $method->getParameters();
 
@@ -521,8 +545,8 @@ class RestServer
 
     public function setStatus($code)
     {
-        $code .= ' '.$this->codes[strval($code)];
-        header("{$_SERVER['SERVER_PROTOCOL']} $code");
+        $code_and_description = $code . ' ' . HttpStatusCodes::getDescription($code);
+        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $code_and_description);
     }
 
     /**
