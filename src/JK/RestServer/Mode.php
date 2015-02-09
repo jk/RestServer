@@ -1,7 +1,7 @@
 <?php
 namespace JK\RestServer;
 
-class Mode extends \SplEnum
+class Mode
 {
     /** Debug mode means no caching and more elaborate error messages */
     const DEBUG = 'debug';
