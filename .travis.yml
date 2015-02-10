@@ -13,7 +13,6 @@ matrix:
 
 before_script:
 #  - echo 'date.timezone = "UTC"' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - travis_retry pecl install SPL_Types
   - travis_retry composer self-update
   - travis_retry composer install --prefer-source --no-interaction --optimize-autoloader
 
