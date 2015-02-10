@@ -40,7 +40,7 @@ class RestServer
     public $url;
     public $method;
     public $params;
-    public $format;
+    public $format = Format::JSON;
     public $cacheDir = '.';
     public $realm;
     /** @var Mode|string Operation mode, can be one of [debug, production] */
@@ -530,12 +530,6 @@ class RestServer
             $data = $output;
             unset($output);
         } else {
-            if (is_object($data) && method_exists($data, '__keepOut')) {
-                $data = clone $data;
-                foreach ($data->__keepOut() as $prop) {
-                    unset($data->$prop);
-                }
-            }
             $data = json_encode($data);
 
             if ($this->format == Format::JSONP) {
@@ -564,9 +558,8 @@ class RestServer
      * you don't have to prepend that directory prefix on every addClass
      * class.
      *
-     * @access public
      * @param  string $root URL prefix you type into your browser
-     * @return void
+     * @return void|null
      */
     public function setRoot($root)
     {

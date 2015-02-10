@@ -187,10 +187,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         return array(
             array(array()),
             array(array('key1' => 'value1&specialchars=1')),
-            array(array(
-                'key1' => 'value1&specialchars=1',
-                'key2' => 'value2',
-            ))
+            array(
+                array(
+                    'key1' => 'value1&specialchars=1',
+                    'key2' => 'value2',
+                )
+            )
         );
     }
 
@@ -232,7 +234,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException JK\RestServer\RestException
+     * @expectedException \JK\RestServer\RestException
      * @expectedExceptionMessage Content-Type "not/supported" not supported
      * @expectedExceptionCode 500
      * @covers ::getData
@@ -279,6 +281,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
             array_push($tmp, $key . '=' . $value);
         }
         $text_input_data = implode('&', $tmp);
+
         return $text_input_data;
     }
 
@@ -290,6 +293,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     {
         $mock = \Mockery::mock('JK\RestServer\RestServer[getRawHttpRequestBody]');
         $mock->shouldReceive('getRawHttpRequestBody')->withNoArgs()->andReturn($text_input_data);
+
         return $mock;
     }
 
@@ -302,6 +306,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $text_input_data = self::convertInputDataArrayToText($array_input_data);
         $mock = $this->mockGetRawHttpRequestBody($text_input_data);
         $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
+
         return $mock;
     }
 
@@ -425,5 +430,133 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
+    }
+
+    /**
+     * @covers ::setStatus()
+     */
+    public function testSetStatus()
+    {
+        unset($_SERVER['SERVER_PROTOCOL']);
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/2';
+
+        $this->sut->setStatus(404);
+
+        $result = $this->sut->header_manager->getStatusHeader();
+
+        $this->assertEquals('HTTP/2 404 Not Found', $result);
+    }
+
+    /**
+     * @covers ::sendData()
+     * @runInSeparateProcess
+     */
+    public function testSendDataDefaultsToJson()
+    {
+        $data = array(
+            'key1' => 'value1'
+        );
+
+        ob_start();
+        $this->sut->sendData($data);
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        // Assert HTTP headers
+        $this->assertEquals('no-cache, must-revalidate', $this->sut->header_manager->getHeader('Cache-Control'));
+        $this->assertEquals(0, $this->sut->header_manager->getHeader('Expires'));
+        $this->assertEquals(Format::JSON, $this->sut->header_manager->getHeader('Content-Type'));
+
+        // Assert body
+        $this->assertJsonStringEqualsJsonString(json_encode($data), $result);
+    }
+
+    /**
+     * @covers ::sendData()
+     * @runInSeparateProcess
+     */
+    public function testSendDataJsonP()
+    {
+        $data = array(
+            'key1' => 'value1'
+        );
+
+        $this->sut->format = Format::JSONP;
+        $_GET['callback'] = 'callback';
+
+        ob_start();
+        $this->sut->sendData($data);
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        // Assert HTTP headers
+        $this->assertEquals('no-cache, must-revalidate', $this->sut->header_manager->getHeader('Cache-Control'));
+        $this->assertEquals(0, $this->sut->header_manager->getHeader('Expires'));
+        $this->assertEquals(Format::JSONP, $this->sut->header_manager->getHeader('Content-Type'));
+
+        // Assert body
+        $this->assertEquals('callback({"key1":"value1"})', $result);
+    }
+
+    /**
+     * @covers ::sendData()
+     * @runInSeparateProcess
+     * @expectedException \JK\RestServer\RestException
+     * @expectedExceptionMessage No callback given.
+     * @expectedExceptionCode 400
+     */
+    public function testSendDataJsonPWithoutCallback()
+    {
+        $this->sut->format = Format::JSONP;
+        unset($_GET['callback']);
+
+        $this->sut->sendData(array());
+    }
+
+    /**
+     * @covers ::sendData()
+     * @runInSeparateProcess
+     */
+    public function testSendDataXml()
+    {
+        $data = array(
+            'key1' => 'value1'
+        );
+
+        $this->sut->format = Format::XML;
+
+        ob_start();
+        $this->sut->sendData($data);
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        // Assert HTTP headers
+        $this->assertEquals('no-cache, must-revalidate', $this->sut->header_manager->getHeader('Cache-Control'));
+        $this->assertEquals(0, $this->sut->header_manager->getHeader('Expires'));
+        $this->assertEquals(Format::XML, $this->sut->header_manager->getHeader('Content-Type'));
+
+        // Assert body
+        $this->assertXmlStringEqualsXmlString(
+            '<?xml version="1.0" encoding="UTF-8" ?><result><key1>value1</key1></result>',
+            $result
+        );
+    }
+
+    /**
+     * @covers ::setRoot()
+     */
+    public function testSetRootToEmpty()
+    {
+        $result = $this->sut->setRoot(null);
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * @covers ::setRoot()
+     */
+    public function testSetRoot()
+    {
+        $this->markTestIncomplete();
     }
 }

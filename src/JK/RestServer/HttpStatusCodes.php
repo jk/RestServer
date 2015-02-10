@@ -131,7 +131,7 @@ final class HttpStatusCodes
 
     public function __construct()
     {
-        throw new \Exception('This class can not be instantiatiated.');
+        throw new \Exception(__CLASS__ . ' class can not be instantiatiated.');
     }
 
     /**
