@@ -58,6 +58,9 @@ class RestServer
     /** @var Format Default Format */
     protected $default_format = Format::JSON;
 
+    /** @var HeaderManager Header manager */
+    public $header_manager;
+
     /**
      * The constructor.
      *
@@ -69,8 +72,11 @@ class RestServer
         if (!in_array($mode, array(Mode::PRODUCTION, Mode::DEBUG))) {
             $mode = Mode::PRODUCTION;
         }
+
         $this->mode = $mode;
         $this->realm = $realm;
+        $this->header_manager = new HeaderManager();
+
         if (php_sapi_name() !== 'cli') {
             $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
         } else {
@@ -107,7 +113,7 @@ class RestServer
     public function unauthorized($ask = false)
     {
         if ($ask) {
-            header("WWW-Authenticate: Basic realm=\"$this->realm\"");
+            $this->header_manager->addHeader('WWW-Authenticate', "Basic realm=\"$this->realm\"");
         }
         throw new RestException(HttpStatusCodes::UNAUTHORIZED, "You are not authorized to access this resource.");
     }
@@ -514,9 +520,9 @@ class RestServer
 
     public function sendData($data)
     {
-        header("Cache-Control: no-cache, must-revalidate");
-        header("Expires: 0");
-        header('Content-Type: '.$this->format);
+        $this->header_manager->addHeader("Cache-Control", "no-cache, must-revalidate");
+        $this->header_manager->addHeader("Expires", 0);
+        $this->header_manager->addHeader('Content-Type', $this->format);
 
         if ($this->format == Format::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
@@ -541,13 +547,14 @@ class RestServer
             }
         }
 
+        $this->header_manager->sendAllHeaders();
         echo $data;
     }
 
     public function setStatus($code)
     {
         $code_and_description = $code . ' ' . HttpStatusCodes::getDescription($code);
-        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $code_and_description);
+        $this->header_manager->setStatusHeader($code_and_description, $_SERVER['SERVER_PROTOCOL']);
     }
 
     /**
@@ -637,7 +644,7 @@ class RestServer
         }
 
         if ($content_language_header_sent === false) {
-            header('Content-Language: ' . $language->getPreferedLanguage());
+            $this->header_manager->addHeader('Content-Language', $language->getPreferedLanguage());
         }
     }
 
