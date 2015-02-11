@@ -55,7 +55,7 @@ class RestServer
     protected $supported_languages = array();
     /** @var string Default Language */
     protected $default_language = 'en';
-    /** @var Format Default Format */
+    /** @var string Default Format */
     protected $default_format = Format::JSON;
 
     /** @var HeaderManager Header manager */
@@ -169,7 +169,8 @@ class RestServer
                 $language = new Language(
                     $this->supported_languages,
                     $this->default_language,
-                    $accept_language_header);
+                    $accept_language_header
+                );
                 $params = $this->injectLanguageIntoMethodParameters($language, $obj, $method, $params);
 
                 $result = call_user_func_array(array($obj, $method), $params);
@@ -485,8 +486,10 @@ class RestServer
             } elseif (in_array('application/json', $components)) {
                 $data = Utilities::objectToArray(json_decode($data));
             } else {
-                throw new RestException(HttpStatusCodes::INTERNAL_SERVER_ERROR,
-                    'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported');
+                throw new RestException(
+                    HttpStatusCodes::INTERNAL_SERVER_ERROR,
+                    'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported'
+                );
             }
         } else {
             $data = Utilities::objectToArray(json_decode($data));
