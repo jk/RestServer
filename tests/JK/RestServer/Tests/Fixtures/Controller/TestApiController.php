@@ -25,4 +25,23 @@ class TestApiController
     {
         return array('param1' => $param1);
     }
+
+    /**
+     * @url GET /method_with_various_doc_block_keys
+     * @param1 value1
+     * @flag
+     * @return bool
+     */
+    public function methodWithVariousDocBlockKeys()
+    {
+        return true;
+    }
+
+    /**
+     * No doc blocks key are defined
+     */
+    public function methodWithoutDocBlockKeys()
+    {
+        return true;
+    }
 }
