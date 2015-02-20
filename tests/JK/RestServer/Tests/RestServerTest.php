@@ -551,12 +551,4 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNull($result);
     }
-
-    /**
-     * @covers ::setRoot()
-     */
-    public function testSetRoot()
-    {
-        $this->markTestIncomplete();
-    }
 }
