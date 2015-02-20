@@ -3,10 +3,15 @@
 
 namespace JK\RestServer\Tests;
 
-
 use JK\RestServer\Language;
 
-class LanguageTest extends \PHPUnit_Framework_TestCase {
+/**
+ * Class LanguageTest
+ * @package JK\RestServer\Tests
+ * @covers JK\RestServer\Language
+ */
+class LanguageTest extends \PHPUnit_Framework_TestCase
+{
 
     protected $supported_languages = array('en', 'de');
     protected $default_language = 'en';
@@ -60,7 +65,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase {
         $result = $language->getSupportedLangauges();
 
         $this->assertInternalType('array', $result);
-        for($i = 0; $i < count($supported_languages); $i++) {
+        for ($i = 0; $i < count($supported_languages); $i++) {
             $expected_language = $supported_languages[$i];
             $actual_language = $result[$i];
             $this->assertEquals($expected_language, $actual_language);
@@ -80,6 +85,19 @@ class LanguageTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(2, $result);
         $this->assertArrayHasKey('en', $result);
         $this->assertArrayHasKey('fr', $result);
+    }
+
+    public function testGetClientAcceptedLanguagesWithEmptyString()
+    {
+        $supported_languages = array();
+        $default_langauge = 'de';
+        $accepted_languages_string = null;
+        $language = new Language($supported_languages, $default_langauge, $accepted_languages_string);
+
+        $result = $language->getClientAcceptedLanguages();
+
+        $this->assertInternalType('array', $result);
+        $this->assertCount(0, $result);
     }
 
     public function testNegotiatedLanguages()

@@ -7,15 +7,15 @@ php:
   - hhvm
 
 matrix:
+  fast_finish: true
   allow_failures:
     - php: hhvm
 
 before_script:
-  - echo 'date.timezone = "UTC"' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - travis_retry pecl install SPL_Types
-  - travis_retry composer selfupdate
+#  - echo 'date.timezone = "UTC"' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+  - travis_retry composer self-update
   - travis_retry composer install --prefer-source --no-interaction --optimize-autoloader
 
 script:
-  - ./vendor/bin/phpunit --coverage-clover ./build/logs/clover.xml
+  - ./vendor/bin/phpunit --exclude-group no-travis --coverage-clover ./build/logs/clover.xml
 #  - ./vendor/bin/phpcs --standard=PSR2 ./src/ ./tests/

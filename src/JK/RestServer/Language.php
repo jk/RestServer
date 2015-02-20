@@ -21,23 +21,26 @@ class Language
     /** @var string Default Language */
     protected $default_language;
 
-    public function __construct(array $supported_languages, $default_langauge = 'en', $accepted_languages_string = null) {
+    public function __construct(array $supported_languages, $default_langauge = 'en', $accepted_languages_string = null)
+    {
         $this->setSupportedLangauges($supported_languages);
         $this->setDefaultLanguage(trim($default_langauge));
 
-        if ($accepted_languages_string != null) {
+        if ($accepted_languages_string !== null) {
             $this->parseAcceptLanguageRequestHeader($accepted_languages_string);
         }
     }
 
-    public function parseAcceptLanguageRequestHeader($accept_language_string) {
+    public function parseAcceptLanguageRequestHeader($accept_language_string)
+    {
         $this->client_accepted_languages = Utilities::sortByPriority($accept_language_string);
     }
 
     /**
      * @return string first negoiated language, otherwise default language
      */
-    public function getPreferedLanguage() {
+    public function getPreferedLanguage()
+    {
         $negotiated_languages = $this->getNegotiatedLangauges();
 
         if (count($negotiated_languages) > 0) {
@@ -64,7 +67,7 @@ class Language
     {
         $negotiated_langauges = array();
 
-        foreach ($this->client_accepted_languages as $language => $quality) {
+        foreach ($this->getClientAcceptedLanguages() as $language => $quality) {
             foreach ($this->supported_langauges as $supported) {
                 if (strcasecmp($supported, $language) == 0) {
                     $negotiated_langauges[] = array($language, $quality);
@@ -80,6 +83,10 @@ class Language
      */
     public function getClientAcceptedLanguages()
     {
+        if ($this->client_accepted_languages === null) {
+            return array();
+        }
+
         return $this->client_accepted_languages;
     }
 

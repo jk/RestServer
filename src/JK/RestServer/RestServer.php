@@ -26,9 +26,8 @@
 namespace JK\RestServer;
 
 use Exception;
-use ReflectionClass;
+use ReflectionException;
 use ReflectionMethod;
-use ReflectionObject;
 
 /**
  * Description of RestServer
@@ -41,9 +40,10 @@ class RestServer
     public $url;
     public $method;
     public $params;
-    public $format;
+    public $format = Format::JSON;
     public $cacheDir = '.';
     public $realm;
+    /** @var Mode|string Operation mode, can be one of [debug, production] */
     public $mode;
     protected $root;
 
@@ -55,18 +55,33 @@ class RestServer
     protected $supported_languages = array();
     /** @var string Default Language */
     protected $default_language = 'en';
+    /** @var Format Default Format */
+    protected $default_format = Format::JSON;
+
+    /** @var HeaderManager Header manager */
+    public $header_manager;
 
     /**
      * The constructor.
      *
-     * @param string $mode  The mode, either debug or production
+     * @param string $mode Operation mode, can be one of [debug, production]
      * @param string $realm Can be debug or production
      */
-    public function __construct($mode = 'debug', $realm = 'Rest Server')
+    public function __construct($mode = Mode::PRODUCTION, $realm = 'Rest Server')
     {
+        if (!in_array($mode, array(Mode::PRODUCTION, Mode::DEBUG))) {
+            $mode = Mode::PRODUCTION;
+        }
+
         $this->mode = $mode;
         $this->realm = $realm;
-        $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
+        $this->header_manager = new HeaderManager();
+
+        if (php_sapi_name() !== 'cli') {
+            $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
+        } else {
+            $this->root = '/';
+        }
     }
 
 
@@ -80,7 +95,7 @@ class RestServer
 
     public function __destruct()
     {
-        if ($this->mode == 'production' && !$this->cached) {
+        if ($this->mode == Mode::PRODUCTION && !$this->cached) {
             if (function_exists('apc_store')) {
                 apc_store('urlMap', $this->map);
             } else {
@@ -98,9 +113,9 @@ class RestServer
     public function unauthorized($ask = false)
     {
         if ($ask) {
-            header("WWW-Authenticate: Basic realm=\"$this->realm\"");
+            $this->header_manager->addHeader('WWW-Authenticate', "Basic realm=\"$this->realm\"");
         }
-        throw new RestException(401, "You are not authorized to access this resource.");
+        throw new RestException(HttpStatusCodes::UNAUTHORIZED, "You are not authorized to access this resource.");
     }
 
     public function handle()
@@ -148,9 +163,19 @@ class RestServer
                     }
                 }
 
-                $params = $this->injectLanguageIntoMethodParameters($obj, $method, $params);
+                $accept_language_header = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
+                    ? $_SERVER['HTTP_ACCEPT_LANGUAGE']
+                    : '';
+                $language = new Language(
+                    $this->supported_languages,
+                    $this->default_language,
+                    $accept_language_header);
+                $params = $this->injectLanguageIntoMethodParameters($language, $obj, $method, $params);
 
                 $result = call_user_func_array(array($obj, $method), $params);
+
+                $this->automaticContentLanguageHeaderDispatch($language);
+
             } catch (RestException $e) {
                 $this->handleError($e->getCode(), $e->getMessage());
             }
@@ -159,7 +184,7 @@ class RestServer
                 $this->sendData($result);
             }
         } else {
-            $this->handleError(404);
+            $this->handleError(HttpStatusCodes::NOT_FOUND);
         }
     }
 
@@ -173,9 +198,6 @@ class RestServer
             } elseif (!is_string($class) && !is_object($class)) {
                 throw new Exception('Invalid method or class; must be a classname or object');
             }
-
-            // Prefix basePath with root (if it's null, that's not a problem)
-            // $basePath = $this->root . ltrim($basePath, '/');
 
             // Kill the leading slash
             $basePath = ltrim($basePath, '/');
@@ -194,9 +216,18 @@ class RestServer
         $this->errorClasses[] = $class;
     }
 
-    public function handleError($statusCode, $errorMessage = null)
+    /**
+     * Handles all error cases. Mostly sets a header and formats an error message to respond to the client
+     *
+     * The more detailed error message will only be returned to the user if the server is in Mode::DEBUG mode
+     *
+     * @param int $status_code HTTP status code
+     * @param string $error_message Error message, you can specify a more detailed error message
+     * @throws RestException
+     */
+    public function handleError($status_code, $error_message = null)
     {
-        $method = "handle$statusCode";
+        $method = "handle$status_code";
         foreach ($this->errorClasses as $class) {
             $reflection = Utilities::reflectionClassFromObjectOrClass($class);
 
@@ -204,14 +235,27 @@ class RestServer
                 $obj = is_string($class) ? new $class() : $class;
                 $obj->$method();
 
-                return null;
+                return;
             }
         }
 
-        $message = $this->codes[$statusCode].($errorMessage && $this->mode == 'debug' ? ': '.$errorMessage : '');
+        $description = HttpStatusCodes::getDescription($status_code);
 
-        $this->setStatus($statusCode);
-        $this->sendData(array('error' => array('code' => $statusCode, 'message' => $message)));
+        if (isset($error_message) && $this->mode == Mode::DEBUG) {
+            $message = $description . ': ' . $error_message;
+        } else {
+            $message = $description;
+        }
+
+        $output = array(
+            'error' => array(
+                'code' => $status_code,
+                'message' => $message
+            )
+        );
+
+        $this->setStatus($status_code);
+        $this->sendData($output);
     }
 
     protected function loadCache()
@@ -222,7 +266,7 @@ class RestServer
 
         $this->cached = false;
 
-        if ($this->mode == 'production') {
+        if ($this->mode == Mode::PRODUCTION) {
             if (function_exists('apc_fetch')) {
                 $map = apc_fetch('urlMap');
             } elseif (file_exists($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache')) {
@@ -282,7 +326,8 @@ class RestServer
                         }
                         $paramMap[$arg] = $match;
 
-                        if (isset($args[$arg])) {
+                        // is_null is here for the case there is no default value for a method parameter
+                        if (isset($args[$arg]) || is_null($args[$arg])) {
                             $params[$args[$arg]] = $match;
                         }
                     }
@@ -317,8 +362,10 @@ class RestServer
             $methods = array();
         }
 
+        /** @var ReflectionMethod $method */
         foreach ($methods as $method) {
             $doc = $method->getDocComment();
+
             if (preg_match_all('/@url[ \t]+(GET|POST|PUT|DELETE|HEAD|OPTIONS)[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
                 $params = $method->getParameters();
 
@@ -339,7 +386,15 @@ class RestServer
                     $call = array($class, $method->getName());
                     $args = array();
                     foreach ($params as $param) {
-                        $args[$param->getName()] = $param->getPosition();
+                        // The order of the parameters is essential, there is no name-matching
+                        // inserting the name is just for easier debuging
+                        try {
+                            $args[$param->getName()] = $param->getDefaultValue();
+                        } catch (ReflectionException $e) {
+                            // If the method has no default parameter set the value to null
+                            $args[$param->getName()] = null;
+                        }
+
                     }
                     $call[] = $args;
                     $call[] = null;
@@ -380,8 +435,6 @@ class RestServer
         if ($path[strlen($path) - 1] == '/') {
             $path = substr($path, 0, -1);
         }
-        // remove root from path
-        // if ($this->root) $path = str_replace($this->root, '', $path);
 
         // remove trailing format definition, like /controller/action.json -> /controller/action
         $path = preg_replace('/\.(\w+)$/i', '', $path);
@@ -394,39 +447,42 @@ class RestServer
         return $_SERVER['REQUEST_METHOD'];
     }
 
+
+    /**
+     * Determine the requested format by the API client
+     *
+     * We have basically two ways requesting an output format
+     * 1. The client tells us the requsted format within the URL like /controller/action.format
+     * 2. The client send the Accept: header
+     *
+     * The order is important only if the client specifies both. If so, the 1. varient (the URL dot syntax)
+     * has precedence
+     *
+     * @return Format|string Client requested output format
+     */
     public function getFormat()
     {
-        $format = RestFormat::PLAIN;
-        $accept_mod = (isset($_SERVER['HTTP_ACCEPT'])) ? preg_replace('/\s+/i', '', $_SERVER['HTTP_ACCEPT']) : '';
-        $accept = explode(',', $accept_mod);
+        $format = $this->default_format;
 
-        $override = '';
-        if (isset($_REQUEST['format']) || isset($_SERVER['HTTP_FORMAT'])) {
-            // give GET/POST precedence over HTTP request headers
-            $override = isset($_SERVER['HTTP_FORMAT']) ? $_SERVER['HTTP_FORMAT'] : '';
-            $override = isset($_REQUEST['format']) ? $_REQUEST['format'] : $override;
-            $override = trim($override);
+        if (isset($_SERVER['HTTP_ACCEPT'])) {
+            $accept_header = Utilities::sortByPriority($_SERVER['HTTP_ACCEPT']);
+
+            foreach ($accept_header as $mime_type => $priority) {
+                if (Format::isMimeTypeSupported($mime_type)) {
+                    $format = $mime_type;
+                    break;
+                }
+            }
         }
 
         // Check for trailing dot-format syntax like /controller/action.format -> action.json
+        $override = '';
         if (preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
             $override = $matches[1];
         }
 
-        // Give GET parameters precedence before all other options to alter the format
-        $override = isset($_GET['format']) ? $_GET['format'] : $override;
-        if (isset(RestFormat::$formats[$override])) {
-            $format = RestFormat::$formats[$override];
-        } elseif (in_array(RestFormat::JSON, $accept)) {
-            $format = RestFormat::JSON;
-        } elseif (in_array(RestFormat::JSONP, $accept)) {
-            $format = RestFormat::JSONP;
-        } elseif (in_array(RestFormat::HTML, $accept)) {
-            $format = RestFormat::HTML;
-        } elseif (in_array(RestFormat::PLAIN, $accept)) {
-            $format = RestFormat::PLAIN;
-        } elseif (in_array(RestFormat::XML, $accept)) {
-            $format = RestFormat::XML;
+        if (Format::getMimeTypeFromFormatAbbreviation($override)) {
+            $format = Format::getMimeTypeFromFormatAbbreviation($override);
         }
 
         return $format;
@@ -452,7 +508,8 @@ class RestServer
             } elseif (in_array('application/json', $components)) {
                 $data = Utilities::objectToArray(json_decode($data));
             } else {
-                throw new RestException(500, 'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported');
+                throw new RestException(HttpStatusCodes::INTERNAL_SERVER_ERROR,
+                    'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported');
             }
         } else {
             $data = Utilities::objectToArray(json_decode($data));
@@ -463,40 +520,35 @@ class RestServer
 
     public function sendData($data)
     {
-        header("Cache-Control: no-cache, must-revalidate");
-        header("Expires: 0");
-        header('Content-Type: '.$this->format);
+        $this->header_manager->addHeader("Cache-Control", "no-cache, must-revalidate");
+        $this->header_manager->addHeader("Expires", 0);
+        $this->header_manager->addHeader('Content-Type', $this->format);
 
-        if ($this->format == RestFormat::XML) {
+        if ($this->format == Format::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
             $output .= "<result>".Utilities::arrayToXml($data).'</result>';
             $data = $output;
             unset($output);
         } else {
-            if (is_object($data) && method_exists($data, '__keepOut')) {
-                $data = clone $data;
-                foreach ($data->__keepOut() as $prop) {
-                    unset($data->$prop);
-                }
-            }
             $data = json_encode($data);
 
-            if ($this->format == RestFormat::JSONP) {
+            if ($this->format == Format::JSONP) {
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
                     $data = $_GET['callback'].'('.$data.')';
                 } else {
-                    throw new RestException(400, 'No callback given.');
+                    throw new RestException(HttpStatusCodes::BAD_REQUEST, 'No callback given.');
                 }
             }
         }
 
+        $this->header_manager->sendAllHeaders();
         echo $data;
     }
 
     public function setStatus($code)
     {
-        $code .= ' '.$this->codes[strval($code)];
-        header("{$_SERVER['SERVER_PROTOCOL']} $code");
+        $code_and_description = $code . ' ' . HttpStatusCodes::getDescription($code);
+        $this->header_manager->setStatusHeader($code_and_description, $_SERVER['SERVER_PROTOCOL']);
     }
 
     /**
@@ -506,9 +558,8 @@ class RestServer
      * you don't have to prepend that directory prefix on every addClass
      * class.
      *
-     * @access public
      * @param  string $root URL prefix you type into your browser
-     * @return void
+     * @return void|null
      */
     public function setRoot($root)
     {
@@ -522,43 +573,6 @@ class RestServer
         $root .= '/';
         $this->root = $root;
     }
-
-    private $codes = array(
-        '100' => 'Continue',
-        '200' => 'OK',
-        '201' => 'Created',
-        '202' => 'Accepted',
-        '203' => 'Non-Authoritative Information',
-        '204' => 'No Content',
-        '205' => 'Reset Content',
-        '206' => 'Partial Content',
-        '300' => 'Multiple Choices',
-        '301' => 'Moved Permanently',
-        '302' => 'Found',
-        '303' => 'See Other',
-        '304' => 'Not Modified',
-        '305' => 'Use Proxy',
-        '307' => 'Temporary Redirect',
-        '400' => 'Bad Request',
-        '401' => 'Unauthorized',
-        '402' => 'Payment Required',
-        '403' => 'Forbidden',
-        '404' => 'Not Found',
-        '405' => 'Method Not Allowed',
-        '406' => 'Not Acceptable',
-        '409' => 'Conflict',
-        '410' => 'Gone',
-        '411' => 'Length Required',
-        '412' => 'Precondition Failed',
-        '413' => 'Request Entity Too Large',
-        '414' => 'Request-URI Too Long',
-        '415' => 'Unsupported Media Type',
-        '416' => 'Requested Range Not Satisfiable',
-        '417' => 'Expectation Failed',
-        '500' => 'Internal Server Error',
-        '501' => 'Not Implemented',
-        '503' => 'Service Unavailable',
-    );
 
     /**
      * Set the supported languages.
@@ -591,12 +605,10 @@ class RestServer
      * @param $params
      * @return mixed
      */
-    protected function injectLanguageIntoMethodParameters($obj, $method, $params)
+    protected function injectLanguageIntoMethodParameters(Language $language, $obj, $method, $params)
     {
         $position_of_language_parameter = Utilities::getPositionsOfParameterWithTypeHint($obj, $method, 'JK\RestServer\Language');
         if (count($position_of_language_parameter) > 0) {
-            $language = new Language($this->supported_languages, $this->default_language, $_SERVER['HTTP_ACCEPT_LANGUAGE']);
-
             foreach ($position_of_language_parameter as $var_name => $position) {
                 $params[$position] = $language;
                 unset($params[$var_name]);
@@ -604,5 +616,46 @@ class RestServer
             return $params;
         }
         return $params;
+    }
+
+    /**
+     * Makes sure that a "Content-Language" header is sent if not already sent (i.e. from the RestServer client code)
+     *
+     * @param Language $language Language object
+     */
+    protected function automaticContentLanguageHeaderDispatch(Language $language)
+    {
+        $headers_sent = headers_list();
+        $content_language_header_sent = false;
+        foreach ($headers_sent as $header) {
+            $header_components = explode(': ', $header);
+            $header_name = $header_components[0];
+
+            if (strcasecmp($header_name, 'content-language') == 0) {
+                $content_language_header_sent = true;
+            }
+        }
+
+        if ($content_language_header_sent === false) {
+            $this->header_manager->addHeader('Content-Language', $language->getPreferedLanguage());
+        }
+    }
+
+    /**
+     * Setting a default output format.
+     *
+     * This will be used if the client does not request any specific format.
+     *
+     * @param string $mime_type Default format
+     * @return bool Setting of default format was successful
+     */
+    public function setDefaultFormat($mime_type)
+    {
+        if (Format::isMimeTypeSupported($mime_type)) {
+            $this->default_format = $mime_type;
+            return true;
+        } else {
+            return false;
+        }
     }
 }

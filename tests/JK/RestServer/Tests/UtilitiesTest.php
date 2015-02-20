@@ -6,10 +6,18 @@ namespace JK\RestServer\Tests;
 use JK\RestServer\Utilities;
 use stdClass;
 
-class TestClass {
-    function method($param1, stdClass $param2) {}
+class TestClass
+{
+    public function method($param1, stdClass $param2)
+    {
+    }
 }
 
+/**
+ * Class UtilitiesTest
+ * @package JK\RestServer\Tests
+ * @covers JK\RestServer\Utilities
+ */
 class UtilitiesTest extends \PHPUnit_Framework_TestCase
 {
 
@@ -35,6 +43,28 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
             $this->assertTrue(($last_value == null || $last_value >= $value), 'result array should be sorted by priority');
             $last_value = $value;
         }
+    }
+
+    /**
+     * @group regression
+     */
+    public function testSortByPriorityWithEqualValuesAndReverseLexigraphicalOrder()
+    {
+        $accept_str = 'a,x';
+
+        $result = Utilities::sortByPriority($accept_str);
+
+        $this->assertInternalType('array', $result);
+
+        $results = array();
+        foreach ($result as $type => $quality) {
+            $results[] = $type;
+        }
+
+        $this->assertEquals('a', $results[0], 'First element should be a, but is: ' . $results[0]);
+        $this->assertEquals('x', $results[1], 'Last element should be x, but is: ' . $results[1]);
+
+
     }
 
     public function testSortByPriorityWithOnlyOneElementWithoutQuality()

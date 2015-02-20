@@ -26,18 +26,46 @@ class Utilities
             return array();
         }
 
-        $acceptList = array();
+        $tmp_accept_list = array();
         $accepts = explode(',', strtolower($accept));
 
         foreach ($accepts as $pos => $accept) {
             $parts = explode(';q=', trim($accept));
             $type = $parts[0];
             $quality = isset($parts[1]) ? floatval($parts[1]) : 1;
-            $acceptList[$type] = $quality;
+            $tmp_accept_list[] = array('type' => $type, 'quality' => $quality);
         }
-        arsort($acceptList);
 
-        return $acceptList;
+        // Attention: $acceptList has to be decorated since all PHP sorting functions aren't stable
+        // for more information a deeper explamentation of the issue, have a look here:
+        // @see http://stackoverflow.com/questions/17364127/reference-all-basic-ways-to-sort-arrays-and-data-in-php/17365409#17365409
+        array_walk($tmp_accept_list, function (&$element, $index) {
+            $element = array($element, $index); // decorate
+        });
+        usort($tmp_accept_list, function ($a, $b) {
+            // $a[0] and $b[0] contain the primary sort key
+            // $a[1] and $b[1] contain the secondary sort key
+            $tmp = strcmp($b[0]['quality'], $a[0]['quality']); // a<=>b swapped, because reveresed sort
+
+            if ($tmp != 0) {
+                return $tmp; // use primary key comparison results
+            }
+
+            return $a[1] - $b[1]; // use secondary key
+        });
+
+        array_walk($tmp_accept_list, function (&$element) {
+            $element = $element[0];
+        });
+
+        $output = array();
+        foreach ($tmp_accept_list as $accept_entry) {
+            $type = $accept_entry['type'];
+            $quality = $accept_entry['quality'];
+            $output[$type] = $quality;
+        }
+
+        return $output;
     }
 
     /**
@@ -60,7 +88,7 @@ class Utilities
             * Using __FUNCTION__ (Magic constant)
             * for recursive call
             */
-            $self_name = 'self::'.__FUNCTION__;
+            $self_name = 'self::' . __FUNCTION__;
 
             return array_map($self_name, $data);
         } else {
@@ -72,7 +100,7 @@ class Utilities
     /**
      * Converts an array into an object
      *
-     * @param  array|string  $data Array data
+     * @param  array|string $data Array data
      * @return object|string Object
      */
     public static function arrayToObject($data)
@@ -83,9 +111,9 @@ class Utilities
             * Using __FUNCTION__ (Magic constant)
             * for recursive call
             */
-            $self_name = 'self::'.__FUNCTION__;
+            $self_name = 'self::' . __FUNCTION__;
 
-            return (object) array_map($self_name, $data);
+            return (object)array_map($self_name, $data);
         } else {
             // Return object
             return $data;
@@ -98,7 +126,7 @@ class Utilities
      * This XML representation is one of various possible representation.
      *
      * @access protected
-     * @param  array      $data      PHP array
+     * @param  array $data PHP array
      * @return string     XML representation
      */
     public static function arrayToXml(array $data)
@@ -109,9 +137,9 @@ class Utilities
 
             $xml = (!empty($xml)) ? $xml : '';
             if (is_array($value)) {
-                $xml .= "<$tag index=\"".$key."\">".self::arrayToXml($value)."</$tag>";
+                $xml .= "<$tag index=\"" . $key . "\">" . self::arrayToXml($value) . "</$tag>";
             } else {
-                $xml .= "<$tag>".$value."</$tag>";
+                $xml .= "<$tag>" . $value . "</$tag>";
             }
         }
 
@@ -119,6 +147,8 @@ class Utilities
     }
 
     /**
+     * Returns a ReflectionClass object from a living instance or a class name
+     *
      * @param  object|string $object_or_class Object (instance of a class) or class name
      * @return ReflectionClass
      */
@@ -152,7 +182,7 @@ class Utilities
         /** @var ReflectionParameter $parameter */
         foreach ($reflection_parameters as $parameter) {
             $type_hint = '';
-            if(isset($parameter->getClass()->name)) {
+            if (isset($parameter->getClass()->name)) {
                 $type_hint = $parameter->getClass()->name;
             }
 

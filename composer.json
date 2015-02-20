@@ -6,15 +6,14 @@
     "php": ">= 5.3.13",
     "ext-json": "*",
     "ext-pcre": "*",
-    "ext-reflection": "*",
-    "ext-spl": "*"
+    "ext-reflection": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "~4",
     "mockery/mockery": ">=0.9.3",
     "fabpot/php-cs-fixer": "~1",
     "squizlabs/php_codesniffer": "~2",
-    "theseer/phpdox": "~0"
+    "satooshi/php-coveralls": "0.6.1"
   },
   "suggest": {
     "ext-simplexml": "*"
