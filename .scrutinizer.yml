@@ -10,6 +10,8 @@ filter:
     - 'tests/*'
 
 before_commands:
+  - rm -rf vendor composer.lock
+  - composer self-update
   - composer install --prefer-source --dev --optimize-autoloader --no-interaction
     
 tools:
