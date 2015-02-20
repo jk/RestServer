@@ -30,7 +30,7 @@ use ReflectionException;
 use ReflectionMethod;
 
 /**
- * Description of RestServer
+ * RestServer main entry point. You will mostly inteact with this class.
  *
  * @author jacob
  * @author Jens Kohl <jens.kohl@gmail.com>
@@ -55,7 +55,7 @@ class RestServer
     protected $supported_languages = array();
     /** @var string Default Language */
     protected $default_language = 'en';
-    /** @var Format Default Format */
+    /** @var string Default Format */
     protected $default_format = Format::JSON;
 
     /** @var HeaderManager Header manager */
@@ -169,7 +169,8 @@ class RestServer
                 $language = new Language(
                     $this->supported_languages,
                     $this->default_language,
-                    $accept_language_header);
+                    $accept_language_header
+                );
                 $params = $this->injectLanguageIntoMethodParameters($language, $obj, $method, $params);
 
                 $result = call_user_func_array(array($obj, $method), $params);
@@ -398,35 +399,12 @@ class RestServer
                     }
                     $call[] = $args;
                     $call[] = null;
-                    $call[] = $this->evaluateDocKeys($doc);
+                    $call[] = DocBlockParser::getDocKeys($method);
 
                     $this->map[$httpMethod][$url] = $call;
                 }
             }
         }
-    }
-
-    private function evaluateDocKeys($doc)
-    {
-        $keysAsArray = array('url');
-        if (preg_match_all('/@(\w+)([ \t](.*?))?\n/', $doc, $matches, PREG_SET_ORDER)) {
-            $keys = array();
-            foreach ($matches as $match) {
-                if (in_array($match[1], $keysAsArray)) {
-                    $keys[$match[1]][] = $match[3];
-                } else {
-                    if (!isset($match[2])) {
-                        $keys[$match[1]] = true;
-                    } else {
-                        $keys[$match[1]] = $match[3];
-                    }
-                }
-            }
-
-            return $keys;
-        }
-
-        return false;
     }
 
     public function getPath()
@@ -508,8 +486,10 @@ class RestServer
             } elseif (in_array('application/json', $components)) {
                 $data = Utilities::objectToArray(json_decode($data));
             } else {
-                throw new RestException(HttpStatusCodes::INTERNAL_SERVER_ERROR,
-                    'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported');
+                throw new RestException(
+                    HttpStatusCodes::INTERNAL_SERVER_ERROR,
+                    'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported'
+                );
             }
         } else {
             $data = Utilities::objectToArray(json_decode($data));
