@@ -10,9 +10,7 @@ php:
 matrix:
   fast_finish: true
   allow_failures:
-    - php:
-      - hhvm
-      - 7.0
+    - php: hhvm
 
 before_script:
 #  - echo 'date.timezone = "UTC"' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
