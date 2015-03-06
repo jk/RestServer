@@ -590,8 +590,11 @@ class RestServer
         $position_of_language_parameter = Utilities::getPositionsOfParameterWithTypeHint($obj, $method, 'JK\RestServer\Language');
         if (count($position_of_language_parameter) > 0) {
             foreach ($position_of_language_parameter as $var_name => $position) {
-                $params[$position] = $language;
-                unset($params[$var_name]);
+                $params[$var_name] = $language;
+
+                if (isset($params[$position])) {
+                    unset($params[$position]);
+                }
             }
             return $params;
         }

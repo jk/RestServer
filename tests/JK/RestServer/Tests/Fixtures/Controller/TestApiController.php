@@ -2,6 +2,8 @@
 namespace JK\RestServer\Tests\Fixtures\Controller;
 
 
+use JK\RestServer\Language;
+
 class TestApiController
 {
     /**
@@ -43,5 +45,18 @@ class TestApiController
     public function methodWithoutDocBlockKeys()
     {
         return true;
+    }
+
+
+    /**
+     * @url GET /method_with_language_object_and_data
+     *
+     * @param Language $language Language object
+     * @param string $data Request body data
+     * @return array input parameter echoed
+     */
+    public function methodWithLanguageObjectAndData(Language $language, $data = null)
+    {
+        return $language->getPreferedLanguage();
     }
 }
