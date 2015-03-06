@@ -1,13 +1,10 @@
 # RestServer.php
-[![Stories in Ready](https://badge.waffle.io/jk/restserver.png?label=ready&title=Ready)](http://waffle.io/jk/restserver)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jk/RestServer/badges/quality-score.png?s=f73d03bf31d39ae6d8e6717e59fb37ee9f070a2e)](https://scrutinizer-ci.com/g/jk/RestServer/)
 [![Code Coverage](https://scrutinizer-ci.com/g/jk/RestServer/badges/coverage.png?s=04bcecf088febc189f3e7f876802def3bd7a5e16)](https://scrutinizer-ci.com/g/jk/RestServer/)
 [![Latest Stable Version](https://poser.pugx.org/jk/restserver/v/stable.svg)](https://packagist.org/packages/jk/restserver)
 [![License](https://poser.pugx.org/jk/restserver/license.svg)](https://packagist.org/packages/jk/restserver)
 [![Total Downloads](https://poser.pugx.org/jk/restserver/downloads.svg)](https://packagist.org/packages/jk/restserver)
-[![Latest Unstable Version](https://poser.pugx.org/jk/restserver/v/unstable.svg)](https://packagist.org/packages/jk/restserver)
 [![Dependency Status](https://www.versioneye.com/php/jk:restserver/badge.svg)](https://www.versioneye.com/php/jk:restserver/)
-[![Coverage Status](https://coveralls.io/repos/jk/RestServer/badge.png)](https://coveralls.io/r/jk/RestServer)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/efa0c47d-3ffa-4fc8-b456-18d2edd29851/mini.png)](https://insight.sensiolabs.com/projects/efa0c47d-3ffa-4fc8-b456-18d2edd29851) 
 [![Documentation Status](https://readthedocs.org/projects/restserver/badge/?version=develop)](https://readthedocs.org/projects/restserver/?badge=develop)
 

@@ -551,4 +551,32 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNull($result);
     }
+
+    /**
+     * @group regression
+     * @group integration
+     * @group no-travis
+     * @runInSeparateProcess
+     * @covers ::injectLanguageIntoMethodParameters()
+     */
+    public function testMethodWithLanguageObjectAndData()
+    {
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $this->sut->setSupportedLanguages(array('en', 'de'));
+        $this->sut->setDefaultLanguage('en');
+
+        $_SERVER['REQUEST_URI'] = '/test/method_with_language_object_and_data';
+        $_SERVER['HTTP_ACCEPT'] = Format::JSON;
+        $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'de';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+
+        ob_start();
+        $this->sut->handle();
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        $this->assertJsonStringEqualsJsonString(json_encode('de'), $result);
+
+    }
 }
