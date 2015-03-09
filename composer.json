@@ -6,7 +6,8 @@
     "php": ">= 5.3.13",
     "ext-json": "*",
     "ext-pcre": "*",
-    "ext-reflection": "*"
+    "ext-reflection": "*",
+    "symfony/event-dispatcher": "~2"
   },
   "require-dev": {
     "phpunit/phpunit": "~4",
