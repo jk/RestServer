@@ -28,6 +28,10 @@ namespace JK\RestServer;
 use Exception;
 use ReflectionException;
 use ReflectionMethod;
+use Symfony\Component\EventDispatcher\Event;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
  * RestServer main entry point. You will mostly inteact with this class.
@@ -61,13 +65,16 @@ class RestServer
     /** @var HeaderManager Header manager */
     public $header_manager;
 
+    /** @var EventDispatcherInterface Event Dispatcher */
+    public $event_dispatcher;
+
     /**
      * The constructor.
      *
      * @param string $mode Operation mode, can be one of [debug, production]
      * @param string $realm Can be debug or production
      */
-    public function __construct($mode = Mode::PRODUCTION, $realm = 'Rest Server')
+    public function __construct($mode = Mode::PRODUCTION, $realm = 'Rest Server', EventDispatcherInterface $event_dispatcher = null)
     {
         if (!in_array($mode, array(Mode::PRODUCTION, Mode::DEBUG))) {
             $mode = Mode::PRODUCTION;
@@ -76,6 +83,12 @@ class RestServer
         $this->mode = $mode;
         $this->realm = $realm;
         $this->header_manager = new HeaderManager();
+
+        if ($event_dispatcher === null) {
+            $this->event_dispatcher = new EventDispatcher();
+        } else {
+            $this->event_dispatcher = $event_dispatcher;
+        }
 
         if (php_sapi_name() !== 'cli') {
             $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
@@ -108,6 +121,7 @@ class RestServer
     {
         $this->map = array();
         $this->cached = false;
+        $this->event_dispatcher->dispatch(Events::DID_REFRESH_CACHE);
     }
 
     public function unauthorized($ask = false)
@@ -636,6 +650,8 @@ class RestServer
     {
         if (Format::isMimeTypeSupported($mime_type)) {
             $this->default_format = $mime_type;
+            $event = new GenericEvent($this, array('mime_type', $mime_type));
+            $this->event_dispatcher->dispatch(Events::DID_SET_DEFAULT_FORMAT, $event);
             return true;
         } else {
             return false;
