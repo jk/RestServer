@@ -60,6 +60,17 @@ class RestServer
 
     /** @var HeaderManager Header manager */
     public $header_manager;
+    /** @var array CORS allowed origins */
+    protected $cors_allowed_origin = array('*');
+    /** @var array CORS allowed custom headers */
+    protected $cors_allowed_headers = array(
+        'accept-language',
+        'accept-encoding',
+        'accept',
+        'content-type'
+    );
+    /** @var int CORS how long should a client cache the CORS preflight */
+    protected $cors_max_age = 1728000;
 
     /**
      * The constructor.
@@ -120,11 +131,16 @@ class RestServer
 
     public function handle()
     {
+        // Access-Control-Allow-Origin header should always be set
+        $this->header_manager->addHeader("Access-Control-Allow-Origin", join(', ', $this->cors_allowed_origin));
+
         $this->url = $this->getPath();
         $this->method = $this->getMethod();
         $this->format = $this->getFormat();
 
-        if ($this->method == 'PUT' || $this->method == 'POST' || $this->method == 'GET') {
+        $http_methods_allowed = HttpMethods::getMethodsWhereRequestBodyIsAllowed();
+        $http_methods_allowed[] = HttpMethods::GET;
+        if (in_array($this->method, $http_methods_allowed)) {
             try {
                 $this->data = $this->getData();
             } catch (RestException $e) {
@@ -184,9 +200,40 @@ class RestServer
             if (!empty($result)) {
                 $this->sendData($result);
             }
+        } elseif (!isset($obj) && $this->method == HttpMethods::OPTIONS) {
+            $this->handleCorsPreflightRequest();
         } else {
             $this->handleError(HttpStatusCodes::NOT_FOUND);
         }
+    }
+
+    /**
+     * Handle CORS preflight requests automatically
+     *
+     * @throws RestException
+     */
+    protected function handleCorsPreflightRequest()
+    {
+        // Automatic CORS preflight response
+        $existing_verbs = array();
+        foreach (HttpMethods::getAllMethods() as $http_verb) {
+            // Get "example" dynamically
+            if (isset($this->map[$http_verb][$this->url])) {
+                $existing_verbs[] = $http_verb;
+            }
+        }
+        // OPTIONS is always part of the allowed methods
+        $existing_verbs[] = HttpMethods::OPTIONS;
+
+        // Access-Control-Allow-Origin will be handled in ::handle()
+        $this->header_manager->addHeader("Access-Control-Allow-Methods", join(', ', $existing_verbs));
+        $this->header_manager->addHeader('Access-Control-Max-Age', intval($this->cors_max_age));
+        if (count($this->cors_allowed_headers) > 0) {
+            $this->header_manager->addHeader('Access-Control-Allow-Headers',
+                join(', ', $this->cors_allowed_headers));
+        }
+
+        $this->sendData('');
     }
 
     public function addClass($class, $basePath = '')
@@ -370,7 +417,8 @@ class RestServer
         foreach ($methods as $method) {
             $doc = $method->getDocComment();
 
-            if (preg_match_all('/@url[ \t]+(GET|POST|PUT|DELETE|HEAD|OPTIONS)[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
+            $all_http_verbs_joined_by_pipes = implode('|', HttpMethods::getAllMethods());
+            if (preg_match_all('/@url[ \t]+('. $all_http_verbs_joined_by_pipes .')[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
                 $params = $method->getParameters();
 
                 foreach ($matches as $match) {
@@ -643,5 +691,54 @@ class RestServer
         } else {
             return false;
         }
+    }
+
+    /**
+     * Set the CORS Access-Control-Allow-Origin header
+     *
+     * @param array $cors_allowed_origin Access-Control-Allow-Origin header
+     */
+    public function setCorsAllowedOrigin(array $cors_allowed_origin)
+    {
+        $this->cors_allowed_origin = $cors_allowed_origin;
+    }
+
+    /**
+     * Set the CORS Access-Control-Allow-Headers header
+     *
+     * @param array $cors_allowed_headers Access-Control-Allow-Headers header
+     */
+    public function setCorsAllowedHeaders(array $cors_allowed_headers)
+    {
+        foreach ($cors_allowed_headers as $cors_allowed_header) {
+            $this->addCorsAllowedHeader($cors_allowed_header);
+        }
+    }
+
+    public function addCorsAllowedHeader($cors_allowed_header)
+    {
+        $this->cors_allowed_headers[] = trim(strtolower($cors_allowed_header));
+    }
+
+    /**
+     * Get the CORS Access-Control-Allow-Headers header
+     *
+     * @return array Access-Control-Allow-Headers header
+     */
+    public function getCorsAllowedHeaders()
+    {
+        return $this->cors_allowed_headers;
+    }
+
+
+
+    /**
+     * Set the CORS Access-Control-Max-Age header
+     *
+     * @param int $cors_max_age Access-Control-Max-Age header
+     */
+    public function setCorsMaxAge($cors_max_age)
+    {
+        $this->cors_max_age = $cors_max_age;
     }
 }
