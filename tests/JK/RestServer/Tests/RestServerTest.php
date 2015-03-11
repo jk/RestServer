@@ -579,4 +579,72 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString(json_encode('de'), $result);
 
     }
+
+    /**
+     * @group integration
+     * @group no-travis
+     * @throws \Exception
+     * @runInSeparateProcess
+     * @covers ::handle()
+     * @covers ::handleCorsPreflightRequest()
+     * @covers ::setCorsMaxAge()
+     * @covers ::setCorsAllowedOrigin()
+     * @covers ::setCorsAllowedHeaders()
+     */
+    public function testCorsPreflightRequest()
+    {
+        $cors_max_age = 15;
+        $cors_allowed_origin = array('http://example.tld');
+        $cors_allowed_headers = array('content-type');
+
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $this->sut->setCorsMaxAge($cors_max_age);
+        $this->sut->setCorsAllowedOrigin($cors_allowed_origin);
+        $this->sut->setCorsAllowedHeaders($cors_allowed_headers);
+
+        $_SERVER['REQUEST_URI'] = '/test/method_with_several_verbs_to_test_preflight';
+        $_SERVER['REQUEST_METHOD'] = 'OPTIONS';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+        $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] = 'POST';
+        $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] = 'accept-language, accept, content-type';
+        $_SERVER['HTTP_REFERER'] = 'http://example.tld/path/';
+        $_SERVER['HTTP_ACCEPT_ENCODING'] = 'gzip, deflate, sdch';
+        $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4';
+
+
+        ob_start();
+        $this->sut->handle();
+        ob_end_clean();
+
+        $hm = $this->sut->header_manager;
+
+        $this->assertEquals(implode(', ', $cors_allowed_origin), $hm->getHeader('Access-Control-Allow-Origin'));
+        $this->assertTrue(is_int($hm->getHeader('Access-Control-Max-Age')), 'Access-Control-Max-Age CORS header should be in seconds');
+        $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
+
+        $methods = explode(', ', $hm->getHeader('Access-Control-Allow-Methods'));
+        foreach (array('GET', 'OPTIONS', 'POST', 'DELETE') as $method) {
+            $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
+        }
+
+        $headers = explode(', ', $hm->getHeader('Access-Control-Allow-Headers'));
+        foreach ($cors_allowed_headers as $header) {
+            $this->assertContains($header, $headers, 'Access-Control-Allow-Headers should contain: ' . $header);
+        }
+
+    }
+
+    /**
+     * @covers ::addCorsAllowedHeader()
+     * @covers ::getCorsAllowedHeaders()
+     */
+    public function testaddCorsAllowedHeader()
+    {
+        $this->sut->addCorsAllowedHeader('my-test-header');
+
+        $result = $this->sut->getCorsAllowedHeaders();
+
+        $this->assertContains('my-test-header', $result);
+    }
+
 }
