@@ -291,8 +291,11 @@ class RestServer
         if (count($this->map) == 0) {
             return null;
         }
-        $urls = $this->map[$this->method];
-        if (!$urls) {
+
+        if (isset($this->map[$this->method]))
+        {
+            $urls = $this->map[$this->method];
+        } else {
             return null;
         }
 
