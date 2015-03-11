@@ -25,7 +25,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     {
         // @codeCoverageIgnoreStart
         $this->sut = new RestServer();
-        $this->sut->setDefaultFormat(Format::PLAIN);
+//        $this->sut->setDefaultFormat(Format::PLAIN);
         // @codeCoverageIgnoreEnd
 
         unset($_SERVER['HTTP_ACCEPT']);
@@ -85,8 +85,8 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function requestUriProvider()
     {
         return array(
-            array('/controller/action.format', Format::PLAIN),
-            array('/controller/action', Format::PLAIN),
+            array('/controller/action.format', Format::JSON),
+            array('/controller/action', Format::JSON),
             array('/controller/action.html', Format::HTML),
             array('/controller/action.json', Format::JSON),
             array('/controller/action.xml', Format::XML)
@@ -175,11 +175,11 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function testGetFormatViaWrongUrl()
     {
         // We can't have a '?' in the middle of an URL
-        $_SERVER['REQUEST_URI'] = '/controller.text?/action.json?key=/value.xml';
+        $_SERVER['REQUEST_URI'] = '/controller.text?/action.txt?key=/value.xml';
 
         $result = $this->sut->getFormat();
 
-        $this->assertNotEquals(Format::JSON, $result);
+        $this->assertEquals(Format::JSON, $result);
     }
 
     public function keyValueBodyProvider()
