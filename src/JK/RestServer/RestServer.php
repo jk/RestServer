@@ -40,7 +40,7 @@ class RestServer
     public $url;
     public $method;
     public $params;
-    public $format = Format::JSON;
+    public $format;
     public $cacheDir = '.';
     public $realm;
     /** @var Mode|string Operation mode, can be one of [debug, production] */
@@ -129,18 +129,20 @@ class RestServer
         throw new RestException(HttpStatusCodes::UNAUTHORIZED, "You are not authorized to access this resource.");
     }
 
+    /**
+     * This is the main method every webserver must have called
+     *
+     * @throws Exception Will be thrown if there's a severe problem with the underlying PHP
+     * @throws RestException Will be thrown if there's a formal error with the client request
+     */
     public function handle()
     {
         // Access-Control-Allow-Origin header should always be set
         $this->header_manager->addHeader("Access-Control-Allow-Origin", join(', ', $this->cors_allowed_origin));
 
-        $this->url = $this->getPath();
-        $this->method = $this->getMethod();
-        $this->format = $this->getFormat();
-
         $http_methods_allowed = HttpMethods::getMethodsWhereRequestBodyIsAllowed();
         $http_methods_allowed[] = HttpMethods::GET;
-        if (in_array($this->method, $http_methods_allowed)) {
+        if (in_array($this->getMethod(), $http_methods_allowed)) {
             try {
                 $this->data = $this->getData();
             } catch (RestException $e) {
@@ -200,7 +202,7 @@ class RestServer
             if (!empty($result)) {
                 $this->sendData($result);
             }
-        } elseif (!isset($obj) && $this->method == HttpMethods::OPTIONS) {
+        } elseif (!isset($obj) && $this->getMethod() == HttpMethods::OPTIONS) {
             $this->handleCorsPreflightRequest();
         } else {
             $this->handleError(HttpStatusCodes::NOT_FOUND);
@@ -218,7 +220,7 @@ class RestServer
         $existing_verbs = array();
         foreach (HttpMethods::getAllMethods() as $http_verb) {
             // Get "example" dynamically
-            if (isset($this->map[$http_verb][$this->url])) {
+            if (isset($this->map[$http_verb][$this->getPath()])) {
                 $existing_verbs[] = $http_verb;
             }
         }
@@ -339,9 +341,9 @@ class RestServer
             return null;
         }
 
-        if (isset($this->map[$this->method]))
+        if (isset($this->map[$this->getMethod()]))
         {
-            $urls = $this->map[$this->method];
+            $urls = $this->map[$this->getMethod()];
         } else {
             return null;
         }
@@ -350,7 +352,7 @@ class RestServer
             $args = $call[2];
 
             if (!strstr($url, '$')) {
-                if ($url == $this->url) {
+                if ($url == $this->getPath()) {
                     if (isset($args['data'])) {
                         $params = array_fill(0, $args['data'] + 1, null);
                         $params[$args['data']] = $this->data;
@@ -364,7 +366,7 @@ class RestServer
                 $regex = preg_replace('/\\\\\$([\w\d]+)\.\.\./', '(?P<$1>.+)', str_replace('\.\.\.', '...', preg_quote($url)));
                 // Find named parameters in URL /$something => $matches['something'] = $something
                 $regex = preg_replace('/\\\\\$([\w\d]+)/', '(?P<$1>[^\/]+)', $regex);
-                if (preg_match(":^$regex$:", urldecode($this->url), $matches)) {
+                if (preg_match(":^$regex$:", urldecode($this->getPath()), $matches)) {
                     $params = array();
                     $paramMap = array();
                     if (isset($args['data'])) {
@@ -460,6 +462,10 @@ class RestServer
 
     public function getPath()
     {
+        if ($this->url !== null) {
+            return $this->url;
+        }
+
         $path = substr(preg_replace('/\?.*$/', '', $_SERVER['REQUEST_URI']), 1);
         if ($path[strlen($path) - 1] == '/') {
             $path = substr($path, 0, -1);
@@ -467,6 +473,8 @@ class RestServer
 
         // remove trailing format definition, like /controller/action.json -> /controller/action
         $path = preg_replace('/\.(\w+)$/i', '', $path);
+
+        $this->url = $path;
 
         return $path;
     }
@@ -491,6 +499,10 @@ class RestServer
      */
     public function getFormat()
     {
+        if ($this->format !== null) {
+            return $this->format;
+        }
+
         $format = $this->default_format;
 
         if (isset($_SERVER['HTTP_ACCEPT'])) {
@@ -506,7 +518,7 @@ class RestServer
 
         // Check for trailing dot-format syntax like /controller/action.format -> action.json
         $override = '';
-        if (preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
+        if (isset($_SERVER['REQUEST_URI']) && preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
             $override = $matches[1];
         }
 
@@ -514,11 +526,17 @@ class RestServer
             $format = Format::getMimeTypeFromFormatAbbreviation($override);
         }
 
+        $this->format = $format;
+
         return $format;
     }
 
     public function getData()
     {
+        if ($this->data !== null) {
+            return $this->data;
+        }
+
         $data = $this->getRawHttpRequestBody();
 
         if (isset($_SERVER['CONTENT_TYPE']) && !empty($_SERVER['CONTENT_TYPE'])) {
@@ -546,6 +564,8 @@ class RestServer
             $data = Utilities::objectToArray(json_decode($data));
         }
 
+        $this->data = $data;
+
         return $data;
     }
 
@@ -553,9 +573,9 @@ class RestServer
     {
         $this->header_manager->addHeader("Cache-Control", "no-cache, must-revalidate");
         $this->header_manager->addHeader("Expires", 0);
-        $this->header_manager->addHeader('Content-Type', $this->format);
+        $this->header_manager->addHeader('Content-Type', $this->getFormat());
 
-        if ($this->format == Format::XML) {
+        if ($this->getFormat() == Format::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
             $output .= "<result>".Utilities::arrayToXml($data).'</result>';
             $data = $output;
@@ -563,7 +583,7 @@ class RestServer
         } else {
             $data = json_encode($data);
 
-            if ($this->format == Format::JSONP) {
+            if ($this->getFormat() == Format::JSONP) {
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
                     $data = $_GET['callback'].'('.$data.')';
                 } else {
