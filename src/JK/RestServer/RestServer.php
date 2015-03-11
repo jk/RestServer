@@ -495,7 +495,7 @@ class RestServer
      * The order is important only if the client specifies both. If so, the 1. varient (the URL dot syntax)
      * has precedence
      *
-     * @return Format|string Client requested output format
+     * @return string Client requested output format
      */
     public function getFormat()
     {
