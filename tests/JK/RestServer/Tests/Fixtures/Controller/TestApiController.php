@@ -59,4 +59,14 @@ class TestApiController
     {
         return $language->getPreferedLanguage();
     }
+
+    /**
+     * @url GET /method_with_several_verbs_to_test_preflight
+     * @url POST /method_with_several_verbs_to_test_preflight
+     * @url DELETE /method_with_several_verbs_to_test_preflight
+     */
+    public function methodWithSeveralVerbsToTestPreflight()
+    {
+        return true;
+    }
 }
