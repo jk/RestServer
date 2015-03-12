@@ -219,16 +219,29 @@ class RestServer
         // Automatic CORS preflight response
         $existing_verbs = array();
         foreach (HttpMethods::getAllMethods() as $http_verb) {
-            // Get "example" dynamically
-            if (isset($this->map[$http_verb][$this->getPath()])) {
-                $existing_verbs[] = $http_verb;
+            if (isset($this->map[$http_verb])) {
+                $urls = $this->map[$http_verb];
+
+                foreach (array_keys($urls) as $url) {
+                    if (strstr($url, '$')) {
+                        $matches = $this->matchRequestUriWithMap($this->getPath(), $url);
+
+                        if (count($matches) > 0) {
+                            $existing_verbs[] = $http_verb;
+                            break;
+                        }
+                    } elseif (isset($this->map[$http_verb][$this->getPath()])) {
+                        $existing_verbs[] = $http_verb;
+                        break;
+                    }
+                }
             }
         }
         // OPTIONS is always part of the allowed methods
         $existing_verbs[] = HttpMethods::OPTIONS;
 
         // Access-Control-Allow-Origin will be handled in ::handle()
-        $this->header_manager->addHeader("Access-Control-Allow-Methods", join(', ', $existing_verbs));
+        $this->header_manager->addHeader('Access-Control-Allow-Methods', join(', ', $existing_verbs));
         $this->header_manager->addHeader('Access-Control-Max-Age', intval($this->cors_max_age));
         if (count($this->cors_allowed_headers) > 0) {
             $this->header_manager->addHeader('Access-Control-Allow-Headers',
@@ -362,42 +375,10 @@ class RestServer
                     return $call;
                 }
             } else {
-                // Don't know what's that for: "/$something..." => "/$something"
-                $regex = preg_replace('/\\\\\$([\w\d]+)\.\.\./', '(?P<$1>.+)', str_replace('\.\.\.', '...', preg_quote($url)));
-                // Find named parameters in URL /$something => $matches['something'] = $something
-                $regex = preg_replace('/\\\\\$([\w\d]+)/', '(?P<$1>[^\/]+)', $regex);
-                if (preg_match(":^$regex$:", urldecode($this->getPath()), $matches)) {
-                    $params = array();
-                    $paramMap = array();
-                    if (isset($args['data'])) {
-                        $params[$args['data']] = $this->data;
-                    }
+                $matches = $this->matchRequestUriWithMap($this->getPath(), $url);
 
-                    foreach ($matches as $arg => $match) {
-                        if (is_numeric($arg)) {
-                            continue;
-                        }
-                        $paramMap[$arg] = $match;
-
-                        // is_null is here for the case there is no default value for a method parameter
-                        if (isset($args[$arg]) || is_null($args[$arg])) {
-                            $params[$args[$arg]] = $match;
-                        }
-                    }
-                    ksort($params);
-                    // make sure we have all the params we need
-                    end($params);
-                    $max = key($params);
-                    for ($i = 0; $i < $max; $i++) {
-                        if (!array_key_exists($i, $params)) {
-                            $params[$i] = null;
-                        }
-                    }
-                    ksort($params);
-                    $call[2] = $params;
-                    $call[3] = $paramMap;
-
-                    return $call;
+                if (count($matches) > 0) {
+                    return $this->parseUrlFromMap($matches, $call);
                 }
             }
         }
@@ -760,5 +741,76 @@ class RestServer
     public function setCorsMaxAge($cors_max_age)
     {
         $this->cors_max_age = $cors_max_age;
+    }
+
+    /**
+     * Should be called when $_SERVER['REQUEST_URI'] has a dollar sign it, because it denotes the presence of a
+     * placeholder variable within the URL
+     *
+     * @param string $request_uri Request URI
+     * @param string $url_from_map Url from $this->map
+     * @return array Matches
+     */
+    protected function matchRequestUriWithMap($request_uri, $url_from_map)
+    {
+        $url_from_map = preg_quote($url_from_map);
+        $request_uri = urldecode($request_uri);
+
+        // Don't know what's that for: "/$something..." => "/$something"
+        $regex = preg_replace('/\\\\\$([\w\d]+)\.\.\./', '(?P<$1>.+)', str_replace('\.\.\.', '...', $url_from_map));
+
+        // Find named parameters in URL /$something => $matches['something'] = $something
+        $regex = preg_replace('/\\\\\$([\w\d]+)/', '(?P<$1>[^\/]+)', $regex);
+
+        if (preg_match(":^$regex$:", $request_uri, $matches)) {
+            return $matches;
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * Given matches produced by matchReqeustUriWithMap() and a call varible this methods returns a formatted call
+     * object which gets handled by other RestServer methods
+     *
+     * @param array $matches Mostly used by URLs with in-url varibles
+     * @param array $call call object
+     * @return array formatted call object
+     */
+    protected function parseUrlFromMap($matches, $call)
+    {
+        $args = $call[2];
+
+        $params = array();
+        $paramMap = array();
+        if (isset($args['data'])) {
+            $params[$args['data']] = $this->data;
+        }
+
+        foreach ($matches as $arg => $match) {
+            if (is_numeric($arg)) {
+                continue;
+            }
+            $paramMap[$arg] = $match;
+
+            // is_null is here for the case there is no default value for a method parameter
+            if (isset($args[$arg]) || is_null($args[$arg])) {
+                $params[$args[$arg]] = $match;
+            }
+        }
+        ksort($params);
+        // make sure we have all the params we need
+        end($params);
+        $max = key($params);
+        for ($i = 0; $i < $max; $i++) {
+            if (!array_key_exists($i, $params)) {
+                $params[$i] = null;
+            }
+        }
+        ksort($params);
+        $call[2] = $params;
+        $call[3] = $paramMap;
+
+        return $call;
     }
 }
