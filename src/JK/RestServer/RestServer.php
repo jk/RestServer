@@ -40,7 +40,7 @@ class RestServer
     public $url;
     public $method;
     public $params;
-    public $format = Format::JSON;
+    public $format;
     public $cacheDir = '.';
     public $realm;
     /** @var Mode|string Operation mode, can be one of [debug, production] */
@@ -129,18 +129,20 @@ class RestServer
         throw new RestException(HttpStatusCodes::UNAUTHORIZED, "You are not authorized to access this resource.");
     }
 
+    /**
+     * This is the main method every webserver must have called
+     *
+     * @throws Exception Will be thrown if there's a severe problem with the underlying PHP
+     * @throws RestException Will be thrown if there's a formal error with the client request
+     */
     public function handle()
     {
         // Access-Control-Allow-Origin header should always be set
         $this->header_manager->addHeader("Access-Control-Allow-Origin", join(', ', $this->cors_allowed_origin));
 
-        $this->url = $this->getPath();
-        $this->method = $this->getMethod();
-        $this->format = $this->getFormat();
-
         $http_methods_allowed = HttpMethods::getMethodsWhereRequestBodyIsAllowed();
         $http_methods_allowed[] = HttpMethods::GET;
-        if (in_array($this->method, $http_methods_allowed)) {
+        if (in_array($this->getMethod(), $http_methods_allowed)) {
             try {
                 $this->data = $this->getData();
             } catch (RestException $e) {
@@ -200,7 +202,7 @@ class RestServer
             if (!empty($result)) {
                 $this->sendData($result);
             }
-        } elseif (!isset($obj) && $this->method == HttpMethods::OPTIONS) {
+        } elseif (!isset($obj) && $this->getMethod() == HttpMethods::OPTIONS) {
             $this->handleCorsPreflightRequest();
         } else {
             $this->handleError(HttpStatusCodes::NOT_FOUND);
@@ -217,16 +219,29 @@ class RestServer
         // Automatic CORS preflight response
         $existing_verbs = array();
         foreach (HttpMethods::getAllMethods() as $http_verb) {
-            // Get "example" dynamically
-            if (isset($this->map[$http_verb][$this->url])) {
-                $existing_verbs[] = $http_verb;
+            if (isset($this->map[$http_verb])) {
+                $urls = $this->map[$http_verb];
+
+                foreach (array_keys($urls) as $url) {
+                    if (strstr($url, '$')) {
+                        $matches = $this->matchRequestUriWithMap($this->getPath(), $url);
+
+                        if (count($matches) > 0) {
+                            $existing_verbs[] = $http_verb;
+                            break;
+                        }
+                    } elseif (isset($this->map[$http_verb][$this->getPath()])) {
+                        $existing_verbs[] = $http_verb;
+                        break;
+                    }
+                }
             }
         }
         // OPTIONS is always part of the allowed methods
         $existing_verbs[] = HttpMethods::OPTIONS;
 
         // Access-Control-Allow-Origin will be handled in ::handle()
-        $this->header_manager->addHeader("Access-Control-Allow-Methods", join(', ', $existing_verbs));
+        $this->header_manager->addHeader('Access-Control-Allow-Methods', join(', ', $existing_verbs));
         $this->header_manager->addHeader('Access-Control-Max-Age', intval($this->cors_max_age));
         if (count($this->cors_allowed_headers) > 0) {
             $this->header_manager->addHeader('Access-Control-Allow-Headers',
@@ -339,9 +354,9 @@ class RestServer
             return null;
         }
 
-        if (isset($this->map[$this->method]))
+        if (isset($this->map[$this->getMethod()]))
         {
-            $urls = $this->map[$this->method];
+            $urls = $this->map[$this->getMethod()];
         } else {
             return null;
         }
@@ -350,7 +365,7 @@ class RestServer
             $args = $call[2];
 
             if (!strstr($url, '$')) {
-                if ($url == $this->url) {
+                if ($url == $this->getPath()) {
                     if (isset($args['data'])) {
                         $params = array_fill(0, $args['data'] + 1, null);
                         $params[$args['data']] = $this->data;
@@ -360,42 +375,10 @@ class RestServer
                     return $call;
                 }
             } else {
-                // Don't know what's that for: "/$something..." => "/$something"
-                $regex = preg_replace('/\\\\\$([\w\d]+)\.\.\./', '(?P<$1>.+)', str_replace('\.\.\.', '...', preg_quote($url)));
-                // Find named parameters in URL /$something => $matches['something'] = $something
-                $regex = preg_replace('/\\\\\$([\w\d]+)/', '(?P<$1>[^\/]+)', $regex);
-                if (preg_match(":^$regex$:", urldecode($this->url), $matches)) {
-                    $params = array();
-                    $paramMap = array();
-                    if (isset($args['data'])) {
-                        $params[$args['data']] = $this->data;
-                    }
+                $matches = $this->matchRequestUriWithMap($this->getPath(), $url);
 
-                    foreach ($matches as $arg => $match) {
-                        if (is_numeric($arg)) {
-                            continue;
-                        }
-                        $paramMap[$arg] = $match;
-
-                        // is_null is here for the case there is no default value for a method parameter
-                        if (isset($args[$arg]) || is_null($args[$arg])) {
-                            $params[$args[$arg]] = $match;
-                        }
-                    }
-                    ksort($params);
-                    // make sure we have all the params we need
-                    end($params);
-                    $max = key($params);
-                    for ($i = 0; $i < $max; $i++) {
-                        if (!array_key_exists($i, $params)) {
-                            $params[$i] = null;
-                        }
-                    }
-                    ksort($params);
-                    $call[2] = $params;
-                    $call[3] = $paramMap;
-
-                    return $call;
+                if (count($matches) > 0) {
+                    return $this->parseUrlFromMap($matches, $call);
                 }
             }
         }
@@ -460,6 +443,10 @@ class RestServer
 
     public function getPath()
     {
+        if ($this->url !== null) {
+            return $this->url;
+        }
+
         $path = substr(preg_replace('/\?.*$/', '', $_SERVER['REQUEST_URI']), 1);
         if ($path[strlen($path) - 1] == '/') {
             $path = substr($path, 0, -1);
@@ -467,6 +454,8 @@ class RestServer
 
         // remove trailing format definition, like /controller/action.json -> /controller/action
         $path = preg_replace('/\.(\w+)$/i', '', $path);
+
+        $this->url = $path;
 
         return $path;
     }
@@ -487,10 +476,14 @@ class RestServer
      * The order is important only if the client specifies both. If so, the 1. varient (the URL dot syntax)
      * has precedence
      *
-     * @return Format|string Client requested output format
+     * @return string Client requested output format
      */
     public function getFormat()
     {
+        if ($this->format !== null) {
+            return $this->format;
+        }
+
         $format = $this->default_format;
 
         if (isset($_SERVER['HTTP_ACCEPT'])) {
@@ -506,7 +499,7 @@ class RestServer
 
         // Check for trailing dot-format syntax like /controller/action.format -> action.json
         $override = '';
-        if (preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
+        if (isset($_SERVER['REQUEST_URI']) && preg_match('/\.(\w+)($|\?)/i', $_SERVER['REQUEST_URI'], $matches)) {
             $override = $matches[1];
         }
 
@@ -514,11 +507,17 @@ class RestServer
             $format = Format::getMimeTypeFromFormatAbbreviation($override);
         }
 
+        $this->format = $format;
+
         return $format;
     }
 
     public function getData()
     {
+        if ($this->data !== null) {
+            return $this->data;
+        }
+
         $data = $this->getRawHttpRequestBody();
 
         if (isset($_SERVER['CONTENT_TYPE']) && !empty($_SERVER['CONTENT_TYPE'])) {
@@ -546,6 +545,8 @@ class RestServer
             $data = Utilities::objectToArray(json_decode($data));
         }
 
+        $this->data = $data;
+
         return $data;
     }
 
@@ -553,9 +554,9 @@ class RestServer
     {
         $this->header_manager->addHeader("Cache-Control", "no-cache, must-revalidate");
         $this->header_manager->addHeader("Expires", 0);
-        $this->header_manager->addHeader('Content-Type', $this->format);
+        $this->header_manager->addHeader('Content-Type', $this->getFormat());
 
-        if ($this->format == Format::XML) {
+        if ($this->getFormat() == Format::XML) {
             $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
             $output .= "<result>".Utilities::arrayToXml($data).'</result>';
             $data = $output;
@@ -563,7 +564,7 @@ class RestServer
         } else {
             $data = json_encode($data);
 
-            if ($this->format == Format::JSONP) {
+            if ($this->getFormat() == Format::JSONP) {
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
                     $data = $_GET['callback'].'('.$data.')';
                 } else {
@@ -740,5 +741,76 @@ class RestServer
     public function setCorsMaxAge($cors_max_age)
     {
         $this->cors_max_age = $cors_max_age;
+    }
+
+    /**
+     * Should be called when $_SERVER['REQUEST_URI'] has a dollar sign it, because it denotes the presence of a
+     * placeholder variable within the URL
+     *
+     * @param string $request_uri Request URI
+     * @param string $url_from_map Url from $this->map
+     * @return array Matches
+     */
+    protected function matchRequestUriWithMap($request_uri, $url_from_map)
+    {
+        $url_from_map = preg_quote($url_from_map);
+        $request_uri = urldecode($request_uri);
+
+        // Don't know what's that for: "/$something..." => "/$something"
+        $regex = preg_replace('/\\\\\$([\w\d]+)\.\.\./', '(?P<$1>.+)', str_replace('\.\.\.', '...', $url_from_map));
+
+        // Find named parameters in URL /$something => $matches['something'] = $something
+        $regex = preg_replace('/\\\\\$([\w\d]+)/', '(?P<$1>[^\/]+)', $regex);
+
+        if (preg_match(":^$regex$:", $request_uri, $matches)) {
+            return $matches;
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * Given matches produced by matchReqeustUriWithMap() and a call varible this methods returns a formatted call
+     * object which gets handled by other RestServer methods
+     *
+     * @param array $matches Mostly used by URLs with in-url varibles
+     * @param array $call call object
+     * @return array formatted call object
+     */
+    protected function parseUrlFromMap($matches, $call)
+    {
+        $args = $call[2];
+
+        $params = array();
+        $paramMap = array();
+        if (isset($args['data'])) {
+            $params[$args['data']] = $this->data;
+        }
+
+        foreach ($matches as $arg => $match) {
+            if (is_numeric($arg)) {
+                continue;
+            }
+            $paramMap[$arg] = $match;
+
+            // is_null is here for the case there is no default value for a method parameter
+            if (isset($args[$arg]) || is_null($args[$arg])) {
+                $params[$args[$arg]] = $match;
+            }
+        }
+        ksort($params);
+        // make sure we have all the params we need
+        end($params);
+        $max = key($params);
+        for ($i = 0; $i < $max; $i++) {
+            if (!array_key_exists($i, $params)) {
+                $params[$i] = null;
+            }
+        }
+        ksort($params);
+        $call[2] = $params;
+        $call[3] = $paramMap;
+
+        return $call;
     }
 }

@@ -3,9 +3,9 @@
 
 namespace JK\RestServer\Tests;
 
+use JK\RestServer\Format;
 use JK\RestServer\Mode;
 use JK\RestServer\RestException;
-use JK\RestServer\Format;
 use JK\RestServer\RestServer;
 
 /**
@@ -25,7 +25,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     {
         // @codeCoverageIgnoreStart
         $this->sut = new RestServer();
-        $this->sut->setDefaultFormat(Format::PLAIN);
+//        $this->sut->setDefaultFormat(Format::PLAIN);
         // @codeCoverageIgnoreEnd
 
         unset($_SERVER['HTTP_ACCEPT']);
@@ -85,8 +85,8 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function requestUriProvider()
     {
         return array(
-            array('/controller/action.format', Format::PLAIN),
-            array('/controller/action', Format::PLAIN),
+            array('/controller/action.format', Format::JSON),
+            array('/controller/action', Format::JSON),
             array('/controller/action.html', Format::HTML),
             array('/controller/action.json', Format::JSON),
             array('/controller/action.xml', Format::XML)
@@ -175,11 +175,11 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     public function testGetFormatViaWrongUrl()
     {
         // We can't have a '?' in the middle of an URL
-        $_SERVER['REQUEST_URI'] = '/controller.text?/action.json?key=/value.xml';
+        $_SERVER['REQUEST_URI'] = '/controller.text?/action.txt?key=/value.xml';
 
         $result = $this->sut->getFormat();
 
-        $this->assertNotEquals(Format::JSON, $result);
+        $this->assertEquals(Format::JSON, $result);
     }
 
     public function keyValueBodyProvider()
@@ -602,7 +602,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->sut->setCorsAllowedOrigin($cors_allowed_origin);
         $this->sut->setCorsAllowedHeaders($cors_allowed_headers);
 
-        $_SERVER['REQUEST_URI'] = '/test/method_with_several_verbs_to_test_preflight';
+        $_SERVER['REQUEST_URI'] = '/test/method_with_several_verbs_to_test_preflight?param1=value1&param2=value2';
         $_SERVER['REQUEST_METHOD'] = 'OPTIONS';
         $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
         $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] = 'POST';
@@ -619,7 +619,8 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $hm = $this->sut->header_manager;
 
         $this->assertEquals(implode(', ', $cors_allowed_origin), $hm->getHeader('Access-Control-Allow-Origin'));
-        $this->assertTrue(is_int($hm->getHeader('Access-Control-Max-Age')), 'Access-Control-Max-Age CORS header should be in seconds');
+        $this->assertTrue(is_int($hm->getHeader('Access-Control-Max-Age')),
+            'Access-Control-Max-Age CORS header should be in seconds');
         $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
 
         $methods = explode(', ', $hm->getHeader('Access-Control-Allow-Methods'));
@@ -631,7 +632,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         foreach ($cors_allowed_headers as $header) {
             $this->assertContains($header, $headers, 'Access-Control-Allow-Headers should contain: ' . $header);
         }
-
     }
 
     /**
@@ -645,6 +645,62 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $result = $this->sut->getCorsAllowedHeaders();
 
         $this->assertContains('my-test-header', $result);
+    }
+
+    /**
+     * @group regression
+     * @group integration
+     * @group no-travis
+     * @throws \Exception
+     * @runInSeparateProcess
+     * @covers ::handle()
+     * @covers ::handleCorsPreflightRequest()
+     * @covers ::setCorsMaxAge()
+     * @covers ::setCorsAllowedOrigin()
+     * @covers ::setCorsAllowedHeaders()
+     */
+    public function testCorsPreflightRequestWithUrlParam()
+    {
+        $cors_max_age = 15;
+        $cors_allowed_origin = array('http://example.tld');
+        $cors_allowed_headers = array('content-type');
+
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $this->sut->setCorsMaxAge($cors_max_age);
+        $this->sut->setCorsAllowedOrigin($cors_allowed_origin);
+        $this->sut->setCorsAllowedHeaders($cors_allowed_headers);
+
+        $_SERVER['REQUEST_URI'] = '/test/method_with_several_verbs_to_test_preflight_and_url_param/value1';
+        $_SERVER['REQUEST_METHOD'] = 'OPTIONS';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+        $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] = 'POST';
+        $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] = 'accept-language, accept, content-type';
+        $_SERVER['HTTP_REFERER'] = 'http://example.tld/path/';
+        $_SERVER['HTTP_ACCEPT_ENCODING'] = 'gzip, deflate, sdch';
+        $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4';
+
+
+        ob_start();
+        $this->sut->handle();
+        ob_end_clean();
+
+        $hm = $this->sut->header_manager;
+
+        $this->assertEquals(implode(', ', $cors_allowed_origin), $hm->getHeader('Access-Control-Allow-Origin'));
+        $this->assertTrue(is_int($hm->getHeader('Access-Control-Max-Age')),
+            'Access-Control-Max-Age CORS header should be in seconds');
+        $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
+
+        $methods = explode(', ', $hm->getHeader('Access-Control-Allow-Methods'));
+        foreach (array('DELETE', 'OPTIONS') as $method) {
+            $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
+        }
+
+        $headers = explode(', ', $hm->getHeader('Access-Control-Allow-Headers'));
+        foreach ($cors_allowed_headers as $header) {
+            $this->assertContains($header, $headers, 'Access-Control-Allow-Headers should contain: ' . $header);
+        }
+
     }
 
 }

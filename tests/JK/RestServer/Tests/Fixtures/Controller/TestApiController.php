@@ -69,4 +69,20 @@ class TestApiController
     {
         return true;
     }
+
+    /**
+     * @url DELETE /method_with_several_verbs_to_test_preflight_and_url_param/$param1
+     */
+    public function methodWithSeveralVerbsAndUrlParamToTestPreflight($param1)
+    {
+        return isset($param1);
+    }
+
+    /**
+     * @url GET /method_with_several_verbs_to_test_preflight_and_get_params
+     */
+    public function methodWithSeveralVerbsAndGetParamsTestPreflight()
+    {
+        return $_GET['param1'];
+    }
 }
