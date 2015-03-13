@@ -484,8 +484,8 @@ class RestServer
      *
      * The order is important only if the client specifies both. If so, the 1. varient (the URL dot syntax)
      * has precedence
-     *
      * @return string Client requested output format
+     * @throws RestException Is thrown if content negotiation failed
      */
     public function getFormat()
     {
@@ -495,14 +495,27 @@ class RestServer
 
         $format = $this->default_format;
 
+        // RFC 2616: If no Accept header field is present, then it is assumed that the client accepts all media types.
         if (isset($_SERVER['HTTP_ACCEPT'])) {
             $accept_header = Utilities::sortByPriority($_SERVER['HTTP_ACCEPT']);
 
+            $content_negotiation_successful = false;
             foreach ($accept_header as $mime_type => $priority) {
                 if (Format::isMimeTypeSupported($mime_type)) {
                     $format = $mime_type;
+                    $content_negotiation_successful = true;
                     break;
                 }
+            }
+
+            if (!$content_negotiation_successful) {
+                // RFC 2616: If an Accept header field is present, and if the server cannot send a response which is
+                // acceptable according to the combined Accept field value, then the server SHOULD send a
+                // 406 (not acceptable) response.
+                throw new RestException(
+                    406,
+                    'Content negotiation failed. Try \'' . $this->default_format . '\' instead.'
+                );
             }
         }
 
