@@ -213,6 +213,9 @@ class RestServer
      * Handle CORS preflight requests automatically
      *
      * @throws RestException
+     * @see http://www.w3.org/TR/cors/
+     * @see http://tools.ietf.org/html/rfc4180
+     * @see http://tools.ietf.org/html/rfc5789
      */
     protected function handleCorsPreflightRequest()
     {
@@ -240,6 +243,11 @@ class RestServer
         // OPTIONS is always part of the allowed methods
         $existing_verbs[] = HttpMethods::OPTIONS;
 
+        // RFC5789: PATCH verb OPTIONS response
+        // RFC4180: "Spaces are considered part of a field and should not be ignored."
+        $this->header_manager->addHeader('Allow', join(',', $existing_verbs));
+
+        // CORS Headers
         // Access-Control-Allow-Origin will be handled in ::handle()
         $this->header_manager->addHeader('Access-Control-Allow-Methods', join(', ', $existing_verbs));
         $this->header_manager->addHeader('Access-Control-Max-Age', intval($this->cors_max_age));
