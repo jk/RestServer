@@ -245,15 +245,16 @@ class RestServer
 
         // RFC5789: PATCH verb OPTIONS response
         // RFC4180: "Spaces are considered part of a field and should not be ignored."
-        $this->header_manager->addHeader('Allow', join(',', $existing_verbs));
+        $comma_devider = ',';
+        $this->header_manager->addHeader('Allow', join($comma_devider, $existing_verbs));
 
         // CORS Headers
         // Access-Control-Allow-Origin will be handled in ::handle()
-        $this->header_manager->addHeader('Access-Control-Allow-Methods', join(', ', $existing_verbs));
+        $this->header_manager->addHeader('Access-Control-Allow-Methods', join($comma_devider, $existing_verbs));
         $this->header_manager->addHeader('Access-Control-Max-Age', intval($this->cors_max_age));
         if (count($this->cors_allowed_headers) > 0) {
             $this->header_manager->addHeader('Access-Control-Allow-Headers',
-                join(', ', $this->cors_allowed_headers));
+                join($comma_devider, $this->cors_allowed_headers));
         }
 
         $this->sendData('');
