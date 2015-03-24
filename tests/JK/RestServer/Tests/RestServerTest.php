@@ -623,12 +623,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
             'Access-Control-Max-Age CORS header should be in seconds');
         $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
 
-        $methods = explode(', ', $hm->getHeader('Access-Control-Allow-Methods'));
+        $methods = explode(',', $hm->getHeader('Access-Control-Allow-Methods'));
         foreach (array('GET', 'OPTIONS', 'POST', 'DELETE') as $method) {
             $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
         }
 
-        $headers = explode(', ', $hm->getHeader('Access-Control-Allow-Headers'));
+        $headers = explode(',', $hm->getHeader('Access-Control-Allow-Headers'));
         foreach ($cors_allowed_headers as $header) {
             $this->assertContains($header, $headers, 'Access-Control-Allow-Headers should contain: ' . $header);
         }
@@ -691,12 +691,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
             'Access-Control-Max-Age CORS header should be in seconds');
         $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
 
-        $methods = explode(', ', $hm->getHeader('Access-Control-Allow-Methods'));
+        $methods = explode(',', $hm->getHeader('Access-Control-Allow-Methods'));
         foreach (array('DELETE', 'OPTIONS') as $method) {
             $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
         }
 
-        $headers = explode(', ', $hm->getHeader('Access-Control-Allow-Headers'));
+        $headers = explode(',', $hm->getHeader('Access-Control-Allow-Headers'));
         foreach ($cors_allowed_headers as $header) {
             $this->assertContains($header, $headers, 'Access-Control-Allow-Headers should contain: ' . $header);
         }
