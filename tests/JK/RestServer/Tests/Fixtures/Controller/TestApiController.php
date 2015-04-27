@@ -85,4 +85,19 @@ class TestApiController
     {
         return $_GET['param1'];
     }
+
+    /**
+     * @noAuth
+     * @url GET /string/$string
+     * @url GET /string/$string/first/$first_id
+     * @url GET /string/$string/first/$first_id/second/$second_id
+     */
+    public function wrongParameterOrder($string, $first_id = 23, $second_id = 42)
+    {
+        return [
+            'string' => $string,
+            'first_id' => $first_id,
+            'second_id' => $second_id
+        ];
+    }
 }

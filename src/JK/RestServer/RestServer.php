@@ -788,37 +788,26 @@ class RestServer
      */
     protected function parseUrlFromMap($matches, $call)
     {
-        $args = $call[2];
+        $original_method_parameters_with_default_values = $call[2];
 
         $params = array();
-        $paramMap = array();
-        if (isset($args['data'])) {
-            $params[$args['data']] = $this->data;
+        $params_from_request_uri = array();
+        if (isset($original_method_parameters_with_default_values['data'])) {
+            $params[$original_method_parameters_with_default_values['data']] = $this->data;
         }
 
-        foreach ($matches as $arg => $match) {
-            if (is_numeric($arg)) {
+        foreach ($matches as $matched_variable_name => $matched_variable_value) {
+            if (is_numeric($matched_variable_name)) {
                 continue;
             }
-            $paramMap[$arg] = $match;
+            $params_from_request_uri[$matched_variable_name] = $matched_variable_value;
 
-            // is_null is here for the case there is no default value for a method parameter
-            if (isset($args[$arg]) || is_null($args[$arg])) {
-                $params[$args[$arg]] = $match;
+            if (array_key_exists($matched_variable_name, $original_method_parameters_with_default_values)) {
+                $params[$matched_variable_name] = $matched_variable_value;
             }
         }
-        ksort($params);
-        // make sure we have all the params we need
-        end($params);
-        $max = key($params);
-        for ($i = 0; $i < $max; $i++) {
-            if (!array_key_exists($i, $params)) {
-                $params[$i] = null;
-            }
-        }
-        ksort($params);
         $call[2] = $params;
-        $call[3] = $paramMap;
+        $call[3] = $params_from_request_uri;
 
         return $call;
     }
