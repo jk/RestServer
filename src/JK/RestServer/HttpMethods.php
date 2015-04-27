@@ -7,6 +7,7 @@ use ReflectionClass;
  * Enum of HTTP methods
  * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
  * @see http://tools.ietf.org/html/rfc7231#section-4.3
+ * @see http://tools.ietf.org/html/rfc5789
  * @package JK\RestServer
  */
 class HttpMethods
@@ -201,6 +202,15 @@ class HttpMethods
     const CONNECT = 'CONNECT';
 
     /**
+     * A new method is necessary to improve interoperability and prevent errors.  The PUT method is already defined to
+     * overwrite a resource with a complete new body, and cannot be reused to do partial changes. Otherwise, proxies and
+     * caches, and even clients and servers, may get confused as to the result of the operation.  POST is already used
+     * but without broad interoperability (for one, there is no standard way to discover patch format support).  PATCH
+     * was mentioned in earlier HTTP specifications, but not completely defined.
+     */
+    const PATCH = 'PATCH';
+
+    /**
      * Get all HTTP methods
      *
      * @return array all HTTP methods
@@ -221,7 +231,8 @@ class HttpMethods
     {
         return array(
             self::POST,
-            self::PUT
+            self::PUT,
+            self::PATCH
         );
     }
 }

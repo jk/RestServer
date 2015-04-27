@@ -129,6 +129,18 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * @param string $text_input_data
+     * @return \Mockery\MockInterface|\JK\RestServer\RestServer
+     */
+    protected function mockGetRawHttpRequestBody($text_input_data)
+    {
+        $mock = \Mockery::mock('JK\RestServer\RestServer[getRawHttpRequestBody]');
+        $mock->shouldReceive('getRawHttpRequestBody')->withNoArgs()->andReturn($text_input_data);
+
+        return $mock;
+    }
+
     public function httpHeaderAcceptProvider()
     {
         return array(
@@ -215,6 +227,38 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @param $array_input_data
+     * @return RestServer|\Mockery\MockInterface
+     */
+    protected function prepareGetDataForWwwFormUrlencodedCall($array_input_data)
+    {
+        $text_input_data = self::convertInputDataArrayToText($array_input_data);
+        $mock = $this->mockGetRawHttpRequestBody($text_input_data);
+        $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
+
+        return $mock;
+    }
+
+    /**
+     * @param array $input_data_array Key-Value-Array input params
+     * @return string application/x-www-form-urlencoded formated string
+     */
+    protected static function convertInputDataArrayToText(array $input_data_array)
+    {
+        $input_data_array = array_map(function ($value) {
+            return urlencode($value);
+        }, $input_data_array);
+
+        $tmp = array();
+        foreach ($input_data_array as $key => $value) {
+            array_push($tmp, $key . '=' . $value);
+        }
+        $text_input_data = implode('&', $tmp);
+
+        return $text_input_data;
+    }
+
+    /**
      * @dataProvider keyValueBodyProvider
      * @covers ::getData
      */
@@ -264,50 +308,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
             $this->assertArrayHasKey($key, $result);
             $this->assertEquals($value, $result[$key]);
         }
-    }
-
-    /**
-     * @param array $input_data_array Key-Value-Array input params
-     * @return string application/x-www-form-urlencoded formated string
-     */
-    protected static function convertInputDataArrayToText(array $input_data_array)
-    {
-        $input_data_array = array_map(function ($value) {
-            return urlencode($value);
-        }, $input_data_array);
-
-        $tmp = array();
-        foreach ($input_data_array as $key => $value) {
-            array_push($tmp, $key . '=' . $value);
-        }
-        $text_input_data = implode('&', $tmp);
-
-        return $text_input_data;
-    }
-
-    /**
-     * @param string $text_input_data
-     * @return \Mockery\MockInterface|\JK\RestServer\RestServer
-     */
-    protected function mockGetRawHttpRequestBody($text_input_data)
-    {
-        $mock = \Mockery::mock('JK\RestServer\RestServer[getRawHttpRequestBody]');
-        $mock->shouldReceive('getRawHttpRequestBody')->withNoArgs()->andReturn($text_input_data);
-
-        return $mock;
-    }
-
-    /**
-     * @param $array_input_data
-     * @return RestServer|\Mockery\MockInterface
-     */
-    protected function prepareGetDataForWwwFormUrlencodedCall($array_input_data)
-    {
-        $text_input_data = self::convertInputDataArrayToText($array_input_data);
-        $mock = $this->mockGetRawHttpRequestBody($text_input_data);
-        $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
-
-        return $mock;
     }
 
     /**
@@ -428,6 +428,94 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $expected = array(
             'param1' => 'value_1',
         );
+
+        $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
+    }
+
+
+    /**
+     * @group regression
+     * @group integration
+     * @group no-travis
+     * @runInSeparateProcess
+     * @coversNothing
+     */
+    public function testMethodParameterOrderingPart1()
+    {
+        $expected = array(
+            'string' => 'myString',
+            'first_id' => 23,       // default value of the method
+            'second_id' => 42       // default value of the method
+        );
+
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $_SERVER['REQUEST_URI'] = '/test/string/' . $expected['string'];
+        $_SERVER['HTTP_ACCEPT'] = Format::JSON;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+
+        ob_start();
+        $this->sut->handle();
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
+    }
+
+    /**
+     * @group regression
+     * @group integration
+     * @group no-travis
+     * @runInSeparateProcess
+     * @coversNothing
+     */
+    public function testMethodParameterOrderingPart2()
+    {
+        $expected = array(
+            'string' => 'myString',
+            'first_id' => 4,
+            'second_id' => 42       // default value of the method
+        );
+
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $_SERVER['REQUEST_URI'] = '/test/string/' . $expected['string'] . '/first/' . $expected['first_id'];
+        $_SERVER['HTTP_ACCEPT'] = Format::JSON;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+
+        ob_start();
+        $this->sut->handle();
+        $result = ob_get_contents();
+        ob_end_clean();
+
+        $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
+    }
+
+    /**
+     * @group regression
+     * @group integration
+     * @group no-travis
+     * @runInSeparateProcess
+     * @coversNothing
+     */
+    public function testMethodParameterOrderingPart3()
+    {
+        $expected = array(
+            'string' => 'myString',
+            'first_id' => 4,
+            'second_id' => 5
+        );
+
+        $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
+        $_SERVER['REQUEST_URI'] = '/test/string/' . $expected['string'] . '/first/' . $expected['first_id'] . '/second/' . $expected['second_id'];
+        $_SERVER['HTTP_ACCEPT'] = Format::JSON;
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+
+        ob_start();
+        $this->sut->handle();
+        $result = ob_get_contents();
+        ob_end_clean();
 
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
@@ -623,12 +711,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
             'Access-Control-Max-Age CORS header should be in seconds');
         $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
 
-        $methods = explode(', ', $hm->getHeader('Access-Control-Allow-Methods'));
+        $methods = explode(',', $hm->getHeader('Access-Control-Allow-Methods'));
         foreach (array('GET', 'OPTIONS', 'POST', 'DELETE') as $method) {
             $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
         }
 
-        $headers = explode(', ', $hm->getHeader('Access-Control-Allow-Headers'));
+        $headers = explode(',', $hm->getHeader('Access-Control-Allow-Headers'));
         foreach ($cors_allowed_headers as $header) {
             $this->assertContains($header, $headers, 'Access-Control-Allow-Headers should contain: ' . $header);
         }
@@ -691,12 +779,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
             'Access-Control-Max-Age CORS header should be in seconds');
         $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
 
-        $methods = explode(', ', $hm->getHeader('Access-Control-Allow-Methods'));
+        $methods = explode(',', $hm->getHeader('Access-Control-Allow-Methods'));
         foreach (array('DELETE', 'OPTIONS') as $method) {
             $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
         }
 
-        $headers = explode(', ', $hm->getHeader('Access-Control-Allow-Headers'));
+        $headers = explode(',', $hm->getHeader('Access-Control-Allow-Headers'));
         foreach ($cors_allowed_headers as $header) {
             $this->assertContains($header, $headers, 'Access-Control-Allow-Headers should contain: ' . $header);
         }

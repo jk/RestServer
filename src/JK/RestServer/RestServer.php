@@ -213,6 +213,9 @@ class RestServer
      * Handle CORS preflight requests automatically
      *
      * @throws RestException
+     * @see http://www.w3.org/TR/cors/
+     * @see http://tools.ietf.org/html/rfc4180
+     * @see http://tools.ietf.org/html/rfc5789
      */
     protected function handleCorsPreflightRequest()
     {
@@ -240,12 +243,18 @@ class RestServer
         // OPTIONS is always part of the allowed methods
         $existing_verbs[] = HttpMethods::OPTIONS;
 
+        // RFC5789: PATCH verb OPTIONS response
+        // RFC4180: "Spaces are considered part of a field and should not be ignored."
+        $comma_devider = ',';
+        $this->header_manager->addHeader('Allow', join($comma_devider, $existing_verbs));
+
+        // CORS Headers
         // Access-Control-Allow-Origin will be handled in ::handle()
-        $this->header_manager->addHeader('Access-Control-Allow-Methods', join(', ', $existing_verbs));
+        $this->header_manager->addHeader('Access-Control-Allow-Methods', join($comma_devider, $existing_verbs));
         $this->header_manager->addHeader('Access-Control-Max-Age', intval($this->cors_max_age));
         if (count($this->cors_allowed_headers) > 0) {
             $this->header_manager->addHeader('Access-Control-Allow-Headers',
-                join(', ', $this->cors_allowed_headers));
+                join($comma_devider, $this->cors_allowed_headers));
         }
 
         $this->sendData('');
@@ -744,7 +753,7 @@ class RestServer
     }
 
     /**
-     * Should be called when $_SERVER['REQUEST_URI'] has a dollar sign it, because it denotes the presence of a
+     * Should be called when $_SERVER['REQUEST_URI'] has a dollar sign in it, because it denotes the presence of a
      * placeholder variable within the URL
      *
      * @param string $request_uri Request URI
@@ -779,37 +788,26 @@ class RestServer
      */
     protected function parseUrlFromMap($matches, $call)
     {
-        $args = $call[2];
+        $original_method_parameters_with_default_values = $call[2];
 
         $params = array();
-        $paramMap = array();
-        if (isset($args['data'])) {
-            $params[$args['data']] = $this->data;
+        $params_from_request_uri = array();
+        if (isset($original_method_parameters_with_default_values['data'])) {
+            $params[$original_method_parameters_with_default_values['data']] = $this->data;
         }
 
-        foreach ($matches as $arg => $match) {
-            if (is_numeric($arg)) {
+        foreach ($matches as $matched_variable_name => $matched_variable_value) {
+            if (is_numeric($matched_variable_name)) {
                 continue;
             }
-            $paramMap[$arg] = $match;
+            $params_from_request_uri[$matched_variable_name] = $matched_variable_value;
 
-            // is_null is here for the case there is no default value for a method parameter
-            if (isset($args[$arg]) || is_null($args[$arg])) {
-                $params[$args[$arg]] = $match;
+            if (array_key_exists($matched_variable_name, $original_method_parameters_with_default_values)) {
+                $params[$matched_variable_name] = $matched_variable_value;
             }
         }
-        ksort($params);
-        // make sure we have all the params we need
-        end($params);
-        $max = key($params);
-        for ($i = 0; $i < $max; $i++) {
-            if (!array_key_exists($i, $params)) {
-                $params[$i] = null;
-            }
-        }
-        ksort($params);
         $call[2] = $params;
-        $call[3] = $paramMap;
+        $call[3] = $params_from_request_uri;
 
         return $call;
     }
