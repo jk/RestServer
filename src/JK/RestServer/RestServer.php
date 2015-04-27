@@ -753,7 +753,7 @@ class RestServer
     }
 
     /**
-     * Should be called when $_SERVER['REQUEST_URI'] has a dollar sign it, because it denotes the presence of a
+     * Should be called when $_SERVER['REQUEST_URI'] has a dollar sign in it, because it denotes the presence of a
      * placeholder variable within the URL
      *
      * @param string $request_uri Request URI
