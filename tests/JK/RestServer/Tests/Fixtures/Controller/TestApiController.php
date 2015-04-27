@@ -94,10 +94,10 @@ class TestApiController
      */
     public function wrongParameterOrder($string, $first_id = 23, $second_id = 42)
     {
-        return [
+        return array(
             'string' => $string,
             'first_id' => $first_id,
             'second_id' => $second_id
-        ];
+        );
     }
 }
