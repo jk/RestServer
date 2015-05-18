@@ -375,12 +375,9 @@ class RestServer
 
             if (!strstr($url, '$')) {
                 if ($url == $this->getPath()) {
-                    if (isset($args['data'])) {
-                        $params = array_fill(0, $args['data'] + 1, null);
-                        $params[$args['data']] = $this->data;
-                        $call[2] = $params;
+                    if (array_key_exists('data', $call[2])) {
+                        $call[2]['data'] = $this->data;
                     }
-
                     return $call;
                 }
             } else {
