@@ -16,6 +16,7 @@ before_script:
 - travis_retry composer install --prefer-source --no-interaction --optimize-autoloader
 script:
 - "./vendor/bin/phpunit --exclude-group no-travis --coverage-clover ./build/logs/clover.xml"
+- "./vendor/bin/test-reporter"
 env:
   global:
     secure: dprB6lKW9M9qUP11JTKEG3eSQ+1kd4vjo2TYWqXRWEDvYSXAnMaddJqs05caQipSn/OtXGQow1oQyiM0Do39lA3vN24jOrEnky4GpNlPsEupg+7j7sWWkjmOvEE1R5TxZFzn/4qZ/ABrE6VTkXHA38HzuPPmbW95TFIR5LwsSQg=
