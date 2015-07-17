@@ -29,8 +29,7 @@
         </whitelist>
     </filter>
     <logging>
-        <log type="junit" target="build/log/junit.xml" logIncompleteSkipped="false" />
-        <!--<log type="json" target="build/log/phpunit.json"/>-->
+        <log type="coverage-clover" target="build/logs/clover.xml" logIncompleteSkipped="true" />
     </logging>
 
 </phpunit>
