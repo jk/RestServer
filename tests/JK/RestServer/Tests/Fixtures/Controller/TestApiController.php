@@ -31,6 +31,7 @@ class TestApiController
     /**
      * @url GET /method_with_various_doc_block_keys
      * @param1 value1
+     *
      * @flag
      * @return bool
      */
