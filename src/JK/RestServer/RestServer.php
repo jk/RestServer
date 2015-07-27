@@ -266,9 +266,9 @@ class RestServer
 
         if (!$this->cached) {
             if (is_string($class) && !class_exists($class)) {
-                throw new \Exception('Invalid method or class');
+                throw new \Exception('Invalid method or class: ' . $class);
             } elseif (!is_string($class) && !is_object($class)) {
-                throw new Exception('Invalid method or class; must be a classname or object');
+                throw new Exception('Invalid method or class: ' . $class . '; must be a classname or object');
             }
 
             // Kill the leading slash
