@@ -28,3 +28,4 @@ script:
 - vendor/bin/phpunit --exclude-group no-travis
 after_script:
 - vendor/bin/test-reporter
+- vendor/bin/codacycoverage clover build/logs/clover.xml
