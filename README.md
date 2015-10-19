@@ -1,6 +1,7 @@
 # RestServer.php
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jk/RestServer/badges/quality-score.png?s=f73d03bf31d39ae6d8e6717e59fb37ee9f070a2e)](https://scrutinizer-ci.com/g/jk/RestServer/)
 [![Code Coverage](https://scrutinizer-ci.com/g/jk/RestServer/badges/coverage.png?s=04bcecf088febc189f3e7f876802def3bd7a5e16)](https://scrutinizer-ci.com/g/jk/RestServer/)
+[![Codacy Badge](https://api.codacy.com/project/badge/75463518123b4ac597fcb54d4e77cd4c)](https://www.codacy.com/app/jens-kohl/RestServer)
 [![Latest Stable Version](https://poser.pugx.org/jk/restserver/v/stable.svg)](https://packagist.org/packages/jk/restserver)
 [![License](https://poser.pugx.org/jk/restserver/license.svg)](https://packagist.org/packages/jk/restserver)
 [![Total Downloads](https://poser.pugx.org/jk/restserver/downloads.svg)](https://packagist.org/packages/jk/restserver)
