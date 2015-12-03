@@ -440,6 +440,7 @@ class RestServer
                     $call[] = $args;
                     $call[] = null;
                     $call[] = DocBlockParser::getDocKeys($method);
+                    $call['docblock'] = $doc;
 
                     $this->map[$httpMethod][$url] = $call;
                 }
@@ -737,7 +738,15 @@ class RestServer
         return $this->cors_allowed_headers;
     }
 
-
+    /**
+     * Get an API route map
+     *
+     * @return array API routes map
+     */
+    public function getMap()
+    {
+        return $this->map;
+    }
 
     /**
      * Set the CORS Access-Control-Max-Age header
