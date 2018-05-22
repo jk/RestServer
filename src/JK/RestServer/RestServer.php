@@ -42,6 +42,7 @@ class RestServer
     public $params;
     public $format;
     public $cacheDir = '.';
+    public $apcCacheSuffix;
     public $realm;
     /** @var Mode|string Operation mode, can be one of [debug, production] */
     public $mode;
@@ -87,6 +88,7 @@ class RestServer
         $this->mode = $mode;
         $this->realm = $realm;
         $this->header_manager = new HeaderManager();
+        $this->apcCacheSuffix = crc32(__DIR__);
 
         if (php_sapi_name() !== 'cli') {
             $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
@@ -108,7 +110,7 @@ class RestServer
     {
         if ($this->mode == Mode::PRODUCTION && !$this->cached) {
             if (function_exists('apc_store')) {
-                apc_store('urlMap', $this->map);
+                apc_store('urlMap_'.$this->apcCacheSuffix, $this->map);
             } else {
                 file_put_contents($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache', serialize($this->map));
             }
@@ -340,7 +342,7 @@ class RestServer
 
         if ($this->mode == Mode::PRODUCTION) {
             if (function_exists('apc_fetch')) {
-                $map = apc_fetch('urlMap');
+                $map = apc_fetch('urlMap_'.$this->apcCacheSuffix);
             } elseif (file_exists($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache')) {
                 $map = unserialize(file_get_contents($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache'));
             }
@@ -350,7 +352,7 @@ class RestServer
             }
         } else {
             if (function_exists('apc_delete')) {
-                apc_delete('urlMap');
+                apc_delete('urlMap_'.$this->apcCacheSuffix);
             } else {
                 @unlink($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache');
             }
