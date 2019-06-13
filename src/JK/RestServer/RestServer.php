@@ -540,7 +540,7 @@ class RestServer
 
                 return $output;
             } elseif (in_array('application/json', $components)) {
-                $data = Utilities::objectToArray(json_decode($data));
+                $data = json_decode($data);
             } else {
                 throw new RestException(
                     HttpStatusCodes::INTERNAL_SERVER_ERROR,
@@ -548,7 +548,7 @@ class RestServer
                 );
             }
         } else {
-            $data = Utilities::objectToArray(json_decode($data));
+            $data = json_decode($data);
         }
 
         $this->data = $data;
