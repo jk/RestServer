@@ -652,6 +652,27 @@ class RestServer
     }
 
     /**
+     * Get the current input data transformation mode
+     *
+     * @return string
+     */
+    public function getInputDataTransformation()
+    {
+        return $this->inputDataTransformation;
+    }
+
+    /**
+     * Sets the input data transformation mode
+     *
+     * @param string $inputDataTransformation
+     * @see InputDataTransformationMode
+     */
+    public function setInputDataTransformation($inputDataTransformation)
+    {
+        $this->inputDataTransformation = $inputDataTransformation;
+    }
+
+    /**
      * @param $obj
      * @param $method
      * @param $params
