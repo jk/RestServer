@@ -3,7 +3,7 @@
   "type": "library",
   "description": "A PHP REST server for providing a very light-weight REST API without aweful routing configuration",
   "require": {
-    "php": ">= 5.3.13",
+    "php": "^5.6|~7",
     "ext-json": "*",
     "ext-pcre": "*",
     "ext-reflection": "*"
