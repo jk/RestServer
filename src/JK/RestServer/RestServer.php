@@ -58,6 +58,8 @@ class RestServer
     protected $default_language = 'en';
     /** @var string Default Format */
     protected $default_format = Format::JSON;
+    /** @var string Internal data type transformation */
+    protected $inputDataTransformation = InputDataTransformationMode::TO_ARRAY;
 
     /** @var HeaderManager Header manager */
     public $header_manager;
@@ -520,6 +522,10 @@ class RestServer
         return $format;
     }
 
+    /**
+     * @return array|object|string
+     * @throws RestException
+     */
     public function getData()
     {
         if ($this->data !== null) {
@@ -541,8 +547,10 @@ class RestServer
                 }
 
                 return $output;
-            } elseif (in_array('application/json', $components)) {
-                $data = Utilities::objectToArray(json_decode($data));
+            }
+
+            if (in_array('application/json', $components)) {
+                $data = $this->inputDataTransformation($data);
             } else {
                 throw new RestException(
                     HttpStatusCodes::INTERNAL_SERVER_ERROR,
@@ -550,7 +558,7 @@ class RestServer
                 );
             }
         } else {
-            $data = Utilities::objectToArray(json_decode($data));
+            $data = $this->inputDataTransformation($data);
         }
 
         $this->data = $data;
@@ -558,6 +566,10 @@ class RestServer
         return $data;
     }
 
+    /**
+     * @param $data
+     * @throws RestException
+     */
     public function sendData($data)
     {
         $this->header_manager->addHeader("Cache-Control", "no-cache, must-revalidate");
@@ -772,9 +784,9 @@ class RestServer
 
         if (preg_match(":^$regex$:", $request_uri, $matches)) {
             return $matches;
-        } else {
-            return array();
         }
+
+        return array();
     }
 
     /**
@@ -809,5 +821,30 @@ class RestServer
         $call[3] = $params_from_request_uri;
 
         return $call;
+    }
+
+    /**
+     * Transforms input data from the client into none, array or object type
+     *
+     * @param $data mixed Arbitrary input data
+     * @return array|object|string Choosen output format
+     * @throws \InvalidArgumentException If an output format was choosen which does not exist
+     */
+    protected function inputDataTransformation($data)
+    {
+        switch ($this->inputDataTransformation) {
+            case InputDataTransformationMode::TO_ARRAY:
+                $data = Utilities::objectToArray(json_decode($data));
+                break;
+            case InputDataTransformationMode::TO_OBJECT:
+                $data = json_decode($data, false);
+                break;
+            case InputDataTransformationMode::NONE:
+                $data = trim($data);
+                break;
+            default:
+                throw new \InvalidArgumentException('RestServer::inputDataTransformation is invalid');
+        }
+        return $data;
     }
 }
