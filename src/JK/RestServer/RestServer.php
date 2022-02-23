@@ -375,8 +375,6 @@ class RestServer
         }
 
         foreach ($urls as $url => $call) {
-            $args = $call[2];
-
             if (!strstr($url, '$')) {
                 if ($url == $this->getPath()) {
                     if (array_key_exists('data', $call[2])) {
@@ -428,8 +426,8 @@ class RestServer
                     if ($url && $url[strlen($url) - 1] == '/') {
                         $url = substr($url, 0, -1);
                     }
-                    $call = array($class, $method->getName());
-                    $args = array();
+                    $call = [$class, $method->getName()];
+                    $args = [];
                     foreach ($params as $param) {
                         // The order of the parameters is essential, there is no name-matching
                         // inserting the name is just for easier debuging
