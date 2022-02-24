@@ -72,7 +72,7 @@ class Utilities
      * Converts an object into an array
      *
      * @param  object $data object
-     * @return array  Array
+     * @return object|array  Array
      */
     public static function objectToArray($data)
     {
