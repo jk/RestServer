@@ -13,6 +13,11 @@ final class HeaderManager
     /** @var array Colletion of HTTP headers */
     private $headers = array();
 
+    /** These headers are only once allowed */
+    private $singleHeader = [
+        "Access-Control-Allow-Origin"
+    ];
+
     /**
      * Sets some defaults
      */
@@ -121,7 +126,18 @@ final class HeaderManager
         }
 
         foreach ($this->headers as $name => $value) {
-            header($name . ': ' . $value);
+            if (!$this->isSingleHeaderAndNotAlreadySent($name)) {
+                header($name . ': ' . $value);
+            }
         }
+    }
+
+    private function isSingleHeaderAndNotAlreadySent(string $name): bool
+    {
+        if (!in_array($name, $this->singleHeader)) {
+            return false;
+        }
+
+        return array_key_exists($name, array_keys(headers_list()));
     }
 }
