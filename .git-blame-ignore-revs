@@ -1,0 +1,3 @@
+# Bulk formatting commits, ignored by `git blame` (git config blame.ignoreRevsFile .git-blame-ignore-revs).
+# Apply PER-CS coding style
+ec049c8404c0eb7f7d470f6781429133857bc6c8
