@@ -1,6 +1,6 @@
 <?php
-namespace JK\RestServer\Tests\Fixtures\Controller;
 
+namespace JK\RestServer\Tests\Fixtures\Controller;
 
 use JK\RestServer\Language;
 
@@ -15,7 +15,7 @@ class TestApiController
      */
     public function unorderd($param1 = 'default_value_1', $param2 = 'default_value_2')
     {
-        return array('param1' => $param1, 'param2' => $param2);
+        return ['param1' => $param1, 'param2' => $param2];
     }
 
     /**
@@ -25,7 +25,7 @@ class TestApiController
      */
     public function methodWithoutDefaultParamets($param1)
     {
-        return array('param1' => $param1);
+        return ['param1' => $param1];
     }
 
     /**
@@ -95,10 +95,10 @@ class TestApiController
      */
     public function wrongParameterOrder($string, $first_id = 23, $second_id = 42)
     {
-        return array(
+        return [
             'string' => $string,
             'first_id' => $first_id,
-            'second_id' => $second_id
-        );
+            'second_id' => $second_id,
+        ];
     }
 }

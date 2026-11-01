@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JK\RestServer;
 
 use Exception;

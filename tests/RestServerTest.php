@@ -1,8 +1,12 @@
 <?php
 
-
 namespace JK\RestServer\Tests;
 
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use JK\RestServer\Format;
 use JK\RestServer\Mode;
 use JK\RestServer\RestException;
@@ -10,22 +14,18 @@ use JK\RestServer\RestServer;
 
 /**
  * Class RestServerTest
- * @package JK\RestServer\Tests
- * @coversDefaultClass \JK\RestServer\RestServer
  */
-class RestServerTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(RestServer::class)]
+class RestServerTest extends TestCase
 {
     /** @var \JK\RestServer\RestServer */
     protected $sut;
 
-    /**
-     * @coversNothing
-     */
-    public function setUp()
+    protected function setUp(): void
     {
         // @codeCoverageIgnoreStart
         $this->sut = new RestServer();
-//        $this->sut->setDefaultFormat(Format::PLAIN);
+        //        $this->sut->setDefaultFormat(Format::PLAIN);
         // @codeCoverageIgnoreEnd
 
         unset($_SERVER['HTTP_ACCEPT']);
@@ -33,14 +33,15 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         unset($_SERVER['CONTENT_TYPE']);
     }
 
-    public function tearDown()
+    protected function tearDown(): void
     {
+        // Destructing the server in production mode persists the URL map to disk. Remove it, so
+        // a (possibly empty) map from one test doesn't leak into the routing of another test.
         unset($this->sut);
+        gc_collect_cycles();
+        @unlink(__DIR__ . DIRECTORY_SEPARATOR . 'urlMap.cache');
     }
 
-    /**
-     * @covers ::__construct
-     */
     public function testConstructor()
     {
         $result = new RestServer();
@@ -49,9 +50,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Mode::PRODUCTION, $result->mode);
     }
 
-    /**
-     * @covers ::__construct
-     */
     public function testConstructorInDebugMode()
     {
         $result = new RestServer(Mode::DEBUG);
@@ -60,9 +58,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Mode::DEBUG, $result->mode);
     }
 
-    /**
-     * @covers ::__construct
-     */
     public function testConstructorInProductionMode()
     {
         $result = new RestServer(Mode::PRODUCTION);
@@ -71,9 +66,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Mode::PRODUCTION, $result->mode);
     }
 
-    /**
-     * @covers ::__construct
-     */
     public function testConstructorInNonExistentMode()
     {
         $result = new RestServer('non-existent');
@@ -82,21 +74,18 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Mode::PRODUCTION, $result->mode);
     }
 
-    public function requestUriProvider()
+    public static function requestUriProvider(): array
     {
-        return array(
-            array('/controller/action.format', Format::JSON),
-            array('/controller/action', Format::JSON),
-            array('/controller/action.html', Format::HTML),
-            array('/controller/action.json', Format::JSON),
-            array('/controller/action.xml', Format::XML)
-        );
+        return [
+            ['/controller/action.format', Format::JSON],
+            ['/controller/action', Format::JSON],
+            ['/controller/action.html', Format::HTML],
+            ['/controller/action.json', Format::JSON],
+            ['/controller/action.xml', Format::XML],
+        ];
     }
 
-    /**
-     * @dataProvider requestUriProvider
-     * @covers ::getFormat
-     */
+    #[DataProvider('requestUriProvider')]
     public function testGetFormat($request_uri, $format)
     {
         $_SERVER['REQUEST_URI'] = $request_uri;
@@ -105,11 +94,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($format, $result);
     }
 
-    /**
-     * @regression
-     * @dataProvider keyValueBodyProvider
-     * @covers ::getData
-     */
+    #[DataProvider('keyValueBodyProvider')]
     public function testGetDataWithEmptyContentType($array_input_data)
     {
         $mock = $this->mockGetRawHttpRequestBody(json_encode($array_input_data));
@@ -118,7 +103,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         try {
             $result = $mock->getData();
 
-            $this->assertInternalType('array', $result);
+            $this->assertIsArray($result);
             $this->assertCount(count($array_input_data), $result);
             foreach ($array_input_data as $key => $value) {
                 $this->assertArrayHasKey($key, $result);
@@ -131,34 +116,38 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @param string $text_input_data
-     * @return \Mockery\MockInterface|\JK\RestServer\RestServer
+     * @return RestServer Server returning $text_input_data as raw HTTP request body
      */
     protected function mockGetRawHttpRequestBody($text_input_data)
     {
-        $mock = \Mockery::mock('JK\RestServer\RestServer[getRawHttpRequestBody]');
-        $mock->shouldReceive('getRawHttpRequestBody')->withNoArgs()->andReturn($text_input_data);
+        return new class ($text_input_data) extends RestServer {
+            public function __construct(private string $raw_body)
+            {
+                parent::__construct();
+            }
 
-        return $mock;
+            public function getRawHttpRequestBody()
+            {
+                return $this->raw_body;
+            }
+        };
     }
 
-    public function httpHeaderAcceptProvider()
+    public static function httpHeaderAcceptProvider(): array
     {
-        return array(
-            array('application/json', Format::JSON),
-            array('application/json;q=1,application/xml;q=.5', Format::JSON),
-            array('application/json,application/xml;q=.5', Format::JSON),
-            array('application/json,application/xml', Format::JSON),
-            array('application/json-p', Format::JSONP),
-            array('text/html', Format::HTML),
-            array('text/plain', Format::PLAIN),
-            array('application/xml', Format::XML)
-        );
+        return [
+            ['application/json', Format::JSON],
+            ['application/json;q=1,application/xml;q=.5', Format::JSON],
+            ['application/json,application/xml;q=.5', Format::JSON],
+            ['application/json,application/xml', Format::JSON],
+            ['application/json-p', Format::JSONP],
+            ['text/html', Format::HTML],
+            ['text/plain', Format::PLAIN],
+            ['application/xml', Format::XML],
+        ];
     }
 
-    /**
-     * @dataProvider httpHeaderAcceptProvider
-     * @covers ::getFormat
-     */
+    #[DataProvider('httpHeaderAcceptProvider')]
     public function testGetFormatViaHttpAcceptHeader($http_accept, $format)
     {
         $_SERVER['REQUEST_URI'] = '/controller/action';
@@ -169,9 +158,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($format, $result);
     }
 
-    /**
-     * @covers ::getFormat
-     */
     public function testGetFormatViaUrl()
     {
         $_SERVER['REQUEST_URI'] = '/controller.text/action.json?key=/value.xml';
@@ -181,9 +167,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Format::JSON, $result);
     }
 
-    /**
-     * @covers ::getFormat
-     */
     public function testGetFormatViaWrongUrl()
     {
         // We can't have a '?' in the middle of an URL
@@ -194,31 +177,28 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Format::JSON, $result);
     }
 
-    public function keyValueBodyProvider()
+    public static function keyValueBodyProvider(): array
     {
-        return array(
-            array(array()),
-            array(array('key1' => 'value1&specialchars=1')),
-            array(
-                array(
+        return [
+            [[]],
+            [['key1' => 'value1&specialchars=1']],
+            [
+                [
                     'key1' => 'value1&specialchars=1',
                     'key2' => 'value2',
-                )
-            )
-        );
+                ],
+            ],
+        ];
     }
 
-    /**
-     * @dataProvider keyValueBodyProvider
-     * @covers ::getData
-     */
+    #[DataProvider('keyValueBodyProvider')]
     public function testGetDataAsWwwFormUrlencoded(array $array_input_data)
     {
         $mock = $this->prepareGetDataForWwwFormUrlencodedCall($array_input_data);
 
         $result = $mock->getData();
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertCount(count($array_input_data), $result);
         foreach ($array_input_data as $key => $value) {
             $this->assertArrayHasKey($key, $result);
@@ -228,7 +208,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @param $array_input_data
-     * @return RestServer|\Mockery\MockInterface
+     * @return RestServer
      */
     protected function prepareGetDataForWwwFormUrlencodedCall($array_input_data)
     {
@@ -249,7 +229,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
             return urlencode($value);
         }, $input_data_array);
 
-        $tmp = array();
+        $tmp = [];
         foreach ($input_data_array as $key => $value) {
             array_push($tmp, $key . '=' . $value);
         }
@@ -258,10 +238,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         return $text_input_data;
     }
 
-    /**
-     * @dataProvider keyValueBodyProvider
-     * @covers ::getData
-     */
+    #[DataProvider('keyValueBodyProvider')]
     public function testGetDataAsJsonWithoutContentType(array $array_input_data)
     {
         $mock = $this->mockGetRawHttpRequestBody(json_encode($array_input_data));
@@ -269,7 +246,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $result = $mock->getData();
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertCount(count($array_input_data), $result);
         foreach ($array_input_data as $key => $value) {
             $this->assertArrayHasKey($key, $result);
@@ -277,23 +254,18 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    /**
-     * @expectedException \JK\RestServer\RestException
-     * @expectedExceptionMessage Content-Type "not/supported" not supported
-     * @expectedExceptionCode 500
-     * @covers ::getData
-     */
     public function testGetDataAsJsonWithUnsupportedContentType()
     {
+        $this->expectException(RestException::class);
+        $this->expectExceptionMessage('Content-Type "not/supported" not supported');
+        $this->expectExceptionCode(500);
+
         $_SERVER['CONTENT_TYPE'] = 'not/supported';
 
         $this->sut->getData();
     }
 
-    /**
-     * @dataProvider keyValueBodyProvider
-     * @covers ::getData
-     */
+    #[DataProvider('keyValueBodyProvider')]
     public function testGetDataAsJsonWithContentType(array $array_input_data)
     {
         $mock = $this->mockGetRawHttpRequestBody(json_encode($array_input_data));
@@ -302,7 +274,7 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
 
         $result = $mock->getData();
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertCount(count($array_input_data), $result);
         foreach ($array_input_data as $key => $value) {
             $this->assertArrayHasKey($key, $result);
@@ -310,9 +282,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    /**
-     * @covers ::getPath
-     */
     public function testGetPath()
     {
         $_SERVER['REQUEST_URI'] = '/controller/action.json/';
@@ -323,21 +292,20 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('controller/action', $result);
     }
 
-    public function requestMethodProvider()
+    public static function requestMethodProvider(): array
     {
-        return array(
-            array('PUT'),
-            array('GET'),
-            array('DELETE'),
-            array('PUSH')
-        );
+        return [
+            ['PUT'],
+            ['GET'],
+            ['DELETE'],
+            ['PUSH'],
+        ];
     }
 
     /**
-     * @dataProvider requestMethodProvider
      * @param $request_method
-     * @covers ::getMethod
      */
+    #[DataProvider('requestMethodProvider')]
     public function testGetMethod($request_method)
     {
         $_SERVER['REQUEST_METHOD'] = $request_method;
@@ -348,14 +316,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group bug004
-     * @group regression
-     * @group integration
-     * @group no-travis
      * @throws \Exception
-     * @runInSeparateProcess
-     * @coversNothing
      */
+    #[Group('bug004')]
+    #[Group('regression')]
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testUrlDefaultParameters()
     {
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
@@ -369,21 +335,19 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $result = ob_get_contents();
         ob_end_clean();
 
-        $expected = array(
+        $expected = [
             'param1' => 'default_value_1',
-            'param2' => 'default_value_2'
-        );
+            'param2' => 'default_value_2',
+        ];
 
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
 
     /**
-     * @group integration
-     * @group no-travis
      * @throws \Exception
-     * @runInSeparateProcess
-     * @coversNothing
      */
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testUrlParameters()
     {
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
@@ -397,21 +361,17 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $result = ob_get_contents();
         ob_end_clean();
 
-        $expected = array(
+        $expected = [
             'param1' => 'value_1',
-            'param2' => 'value_2'
-        );
+            'param2' => 'value_2',
+        ];
 
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
 
-    /**
-     * @group regression
-     * @group integration
-     * @group no-travis
-     * @runInSeparateProcess
-     * @coversNothing
-     */
+    #[Group('regression')]
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testAMethodWithoutDefaultParameters()
     {
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
@@ -425,28 +385,23 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $result = ob_get_contents();
         ob_end_clean();
 
-        $expected = array(
+        $expected = [
             'param1' => 'value_1',
-        );
+        ];
 
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
 
-
-    /**
-     * @group regression
-     * @group integration
-     * @group no-travis
-     * @runInSeparateProcess
-     * @coversNothing
-     */
+    #[Group('regression')]
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testMethodParameterOrderingPart1()
     {
-        $expected = array(
+        $expected = [
             'string' => 'myString',
             'first_id' => 23,       // default value of the method
-            'second_id' => 42       // default value of the method
-        );
+            'second_id' => 42,       // default value of the method
+        ];
 
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
         $_SERVER['REQUEST_URI'] = '/test/string/' . $expected['string'];
@@ -462,20 +417,16 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
 
-    /**
-     * @group regression
-     * @group integration
-     * @group no-travis
-     * @runInSeparateProcess
-     * @coversNothing
-     */
+    #[Group('regression')]
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testMethodParameterOrderingPart2()
     {
-        $expected = array(
+        $expected = [
             'string' => 'myString',
-            'first_id' => 4,
-            'second_id' => 42       // default value of the method
-        );
+            'first_id' => '4',     // URL parameters are passed as strings
+            'second_id' => 42,       // default value of the method
+        ];
 
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
         $_SERVER['REQUEST_URI'] = '/test/string/' . $expected['string'] . '/first/' . $expected['first_id'];
@@ -491,20 +442,16 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
 
-    /**
-     * @group regression
-     * @group integration
-     * @group no-travis
-     * @runInSeparateProcess
-     * @coversNothing
-     */
+    #[Group('regression')]
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testMethodParameterOrderingPart3()
     {
-        $expected = array(
+        $expected = [
             'string' => 'myString',
-            'first_id' => 4,
-            'second_id' => 5
-        );
+            'first_id' => '4',     // URL parameters are passed as strings
+            'second_id' => '5',     // URL parameters are passed as strings
+        ];
 
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
         $_SERVER['REQUEST_URI'] = '/test/string/' . $expected['string'] . '/first/' . $expected['first_id'] . '/second/' . $expected['second_id'];
@@ -520,9 +467,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString(json_encode($expected), $result);
     }
 
-    /**
-     * @covers ::setStatus()
-     */
     public function testSetStatus()
     {
         unset($_SERVER['SERVER_PROTOCOL']);
@@ -535,15 +479,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('HTTP/2 404 Not Found', $result);
     }
 
-    /**
-     * @covers ::sendData()
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testSendDataDefaultsToJson()
     {
-        $data = array(
-            'key1' => 'value1'
-        );
+        $data = [
+            'key1' => 'value1',
+        ];
 
         ob_start();
         $this->sut->sendData($data);
@@ -559,15 +500,12 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertJsonStringEqualsJsonString(json_encode($data), $result);
     }
 
-    /**
-     * @covers ::sendData()
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testSendDataJsonP()
     {
-        $data = array(
-            'key1' => 'value1'
-        );
+        $data = [
+            'key1' => 'value1',
+        ];
 
         $this->sut->format = Format::JSONP;
         $_GET['callback'] = 'callback';
@@ -586,30 +524,25 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('callback({"key1":"value1"})', $result);
     }
 
-    /**
-     * @covers ::sendData()
-     * @runInSeparateProcess
-     * @expectedException \JK\RestServer\RestException
-     * @expectedExceptionMessage No callback given.
-     * @expectedExceptionCode 400
-     */
+    #[RunInSeparateProcess]
     public function testSendDataJsonPWithoutCallback()
     {
+        $this->expectException(RestException::class);
+        $this->expectExceptionMessage('No callback given.');
+        $this->expectExceptionCode(400);
+
         $this->sut->format = Format::JSONP;
         unset($_GET['callback']);
 
-        $this->sut->sendData(array());
+        $this->sut->sendData([]);
     }
 
-    /**
-     * @covers ::sendData()
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testSendDataXml()
     {
-        $data = array(
-            'key1' => 'value1'
-        );
+        $data = [
+            'key1' => 'value1',
+        ];
 
         $this->sut->format = Format::XML;
 
@@ -626,13 +559,10 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         // Assert body
         $this->assertXmlStringEqualsXmlString(
             '<?xml version="1.0" encoding="UTF-8" ?><result><key1>value1</key1></result>',
-            $result
+            $result,
         );
     }
 
-    /**
-     * @covers ::setRoot()
-     */
     public function testSetRootToEmpty()
     {
         $result = $this->sut->setRoot(null);
@@ -640,17 +570,13 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @group regression
-     * @group integration
-     * @group no-travis
-     * @runInSeparateProcess
-     * @covers ::injectLanguageIntoMethodParameters()
-     */
+    #[Group('regression')]
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testMethodWithLanguageObjectAndData()
     {
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
-        $this->sut->setSupportedLanguages(array('en', 'de'));
+        $this->sut->setSupportedLanguages(['en', 'de']);
         $this->sut->setDefaultLanguage('en');
 
         $_SERVER['REQUEST_URI'] = '/test/method_with_language_object_and_data';
@@ -669,21 +595,15 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group integration
-     * @group no-travis
      * @throws \Exception
-     * @runInSeparateProcess
-     * @covers ::handle()
-     * @covers ::handleCorsPreflightRequest()
-     * @covers ::setCorsMaxAge()
-     * @covers ::setCorsAllowedOrigin()
-     * @covers ::setCorsAllowedHeaders()
      */
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testCorsPreflightRequest()
     {
         $cors_max_age = 15;
-        $cors_allowed_origin = array('http://example.tld');
-        $cors_allowed_headers = array('content-type');
+        $cors_allowed_origin = ['http://example.tld'];
+        $cors_allowed_headers = ['content-type'];
 
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
         $this->sut->setCorsMaxAge($cors_max_age);
@@ -699,7 +619,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $_SERVER['HTTP_ACCEPT_ENCODING'] = 'gzip, deflate, sdch';
         $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4';
 
-
         ob_start();
         $this->sut->handle();
         ob_end_clean();
@@ -707,12 +626,14 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $hm = $this->sut->header_manager;
 
         $this->assertEquals(implode(', ', $cors_allowed_origin), $hm->getHeader('Access-Control-Allow-Origin'));
-        $this->assertTrue(is_int($hm->getHeader('Access-Control-Max-Age')),
-            'Access-Control-Max-Age CORS header should be in seconds');
+        $this->assertTrue(
+            is_int($hm->getHeader('Access-Control-Max-Age')),
+            'Access-Control-Max-Age CORS header should be in seconds',
+        );
         $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
 
         $methods = explode(',', $hm->getHeader('Access-Control-Allow-Methods'));
-        foreach (array('GET', 'OPTIONS', 'POST', 'DELETE') as $method) {
+        foreach (['GET', 'OPTIONS', 'POST', 'DELETE'] as $method) {
             $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
         }
 
@@ -722,10 +643,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    /**
-     * @covers ::addCorsAllowedHeader()
-     * @covers ::getCorsAllowedHeaders()
-     */
     public function testaddCorsAllowedHeader()
     {
         $this->sut->addCorsAllowedHeader('my-test-header');
@@ -736,22 +653,16 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group regression
-     * @group integration
-     * @group no-travis
      * @throws \Exception
-     * @runInSeparateProcess
-     * @covers ::handle()
-     * @covers ::handleCorsPreflightRequest()
-     * @covers ::setCorsMaxAge()
-     * @covers ::setCorsAllowedOrigin()
-     * @covers ::setCorsAllowedHeaders()
      */
+    #[Group('regression')]
+    #[Group('integration')]
+    #[RunInSeparateProcess]
     public function testCorsPreflightRequestWithUrlParam()
     {
         $cors_max_age = 15;
-        $cors_allowed_origin = array('http://example.tld');
-        $cors_allowed_headers = array('content-type');
+        $cors_allowed_origin = ['http://example.tld'];
+        $cors_allowed_headers = ['content-type'];
 
         $this->sut->addClass(new \JK\RestServer\Tests\Fixtures\Controller\TestApiController(), 'test');
         $this->sut->setCorsMaxAge($cors_max_age);
@@ -767,7 +678,6 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $_SERVER['HTTP_ACCEPT_ENCODING'] = 'gzip, deflate, sdch';
         $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4';
 
-
         ob_start();
         $this->sut->handle();
         ob_end_clean();
@@ -775,12 +685,14 @@ class RestServerTest extends \PHPUnit_Framework_TestCase
         $hm = $this->sut->header_manager;
 
         $this->assertEquals(implode(', ', $cors_allowed_origin), $hm->getHeader('Access-Control-Allow-Origin'));
-        $this->assertTrue(is_int($hm->getHeader('Access-Control-Max-Age')),
-            'Access-Control-Max-Age CORS header should be in seconds');
+        $this->assertTrue(
+            is_int($hm->getHeader('Access-Control-Max-Age')),
+            'Access-Control-Max-Age CORS header should be in seconds',
+        );
         $this->assertEquals($cors_max_age, $hm->getHeader('Access-Control-Max-Age'));
 
         $methods = explode(',', $hm->getHeader('Access-Control-Allow-Methods'));
-        foreach (array('DELETE', 'OPTIONS') as $method) {
+        foreach (['DELETE', 'OPTIONS'] as $method) {
             $this->assertContains($method, $methods, 'Access-Control-Allow-Methods should contain: ' . $method);
         }
 

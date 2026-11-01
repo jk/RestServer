@@ -1,29 +1,25 @@
 <?php
-namespace JK\RestServer\Tests\JK\RestServer\Tests;
 
+namespace JK\RestServer\Tests;
 
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use JK\RestServer\HttpStatusCodes;
 
 /**
  * Class HttpStatusCodesTest
- * @package JK\RestServer\Tests\JK\RestServer\Tests
- * @coversDefaultClass \JK\RestServer\HttpStatusCodes
  */
-class HttpStatusCodesTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(HttpStatusCodes::class)]
+class HttpStatusCodesTest extends TestCase
 {
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage HttpStatusCodes class can not be instantiatiated.
-     * @covers ::__construct()
-     */
     public function testConstructorCanNotBeInstantiated()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('HttpStatusCodes class can not be instantiatiated.');
+
         new HttpStatusCodes();
     }
 
-    /**
-     * @covers ::getDescription()
-     */
     public function testGetDescription()
     {
         $result = HttpStatusCodes::getDescription(404);
@@ -31,9 +27,6 @@ class HttpStatusCodesTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Not Found', $result);
     }
 
-    /**
-     * @covers ::getDescription()
-     */
     public function testGetDescriptionForUnknownCode()
     {
         $result = HttpStatusCodes::getDescription(-1);

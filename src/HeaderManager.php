@@ -1,4 +1,5 @@
 <?php
+
 namespace JK\RestServer;
 
 /**
@@ -11,11 +12,11 @@ final class HeaderManager
     /** @var string|null Special HTTP protocol header */
     private $status_header = null;
     /** @var array Colletion of HTTP headers */
-    private $headers = array();
+    private $headers = [];
 
     /** These headers are only once allowed */
     private $singleHeader = [
-        "Access-Control-Allow-Origin"
+        "Access-Control-Allow-Origin",
     ];
 
     /**

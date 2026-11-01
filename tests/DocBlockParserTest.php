@@ -1,39 +1,35 @@
 <?php
 
-
 namespace JK\RestServer\Tests;
 
-
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use JK\RestServer\DocBlockParser;
 
 /**
  * Class DocBlockParserTest
- * @package JK\RestServer\Tests
- * @coversDefaultClass \JK\RestServer\DocBlockParser
  */
-class DocBlockParserTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(DocBlockParser::class)]
+class DocBlockParserTest extends TestCase
 {
     /** @var \ReflectionMethod Reflection method with doc block keys */
     public $reflection_method_with_doc_keys;
     /** @var \ReflectionMethod Reflection method without doc block keys */
     public $reflection_method_without_doc_keys;
 
-    public function setUp()
+    protected function setUp(): void
     {
         $reflection_class = new \ReflectionClass('\JK\RestServer\Tests\Fixtures\Controller\TestApiController');
         $this->reflection_method_with_doc_keys = $reflection_class->getMethod('methodWithVariousDocBlockKeys');
         $this->reflection_method_without_doc_keys = $reflection_class->getMethod('methodWithoutDocBlockKeys');
     }
 
-    public function tearDown()
+    protected function tearDown(): void
     {
         unset($this->reflection_method_with_doc_keys);
         unset($this->reflection_method_without_doc_keys);
     }
 
-    /**
-     * @covers ::getDocKeys()
-     */
     public function testGetDocKeysKeyValue()
     {
         $result = DocBlockParser::getDocKeys($this->reflection_method_with_doc_keys);
@@ -45,20 +41,14 @@ class DocBlockParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bool', $result['return']);
     }
 
-    /**
-     * @covers ::getDocKeys()
-     */
     public function testGetDocKeysUrlKeysAsArray()
     {
         $result = DocBlockParser::getDocKeys($this->reflection_method_with_doc_keys);
 
         $this->assertArrayHasKey('url', $result);
-        $this->assertInternalType('array', $result['url']);
+        $this->assertIsArray($result['url']);
     }
 
-    /**
-     * @covers ::getDocKeys()
-     */
     public function testGetDocKeysFlag()
     {
         $result = DocBlockParser::getDocKeys($this->reflection_method_with_doc_keys);
@@ -67,9 +57,6 @@ class DocBlockParserTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($result['flag']);
     }
 
-    /**
-     * @covers ::getDocKeys()
-     */
     public function testGetDocKeysWithoutAnyKeys()
     {
         $result = DocBlockParser::getDocKeys($this->reflection_method_without_doc_keys);

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JK\RestServer;
 
 use ReflectionClass;
@@ -23,24 +22,24 @@ class Utilities
     public static function sortByPriority($accept)
     {
         if ($accept == '') {
-            return array();
+            return [];
         }
 
-        $tmp_accept_list = array();
+        $tmp_accept_list = [];
         $accepts = explode(',', strtolower($accept));
 
         foreach ($accepts as $pos => $accept) {
             $parts = explode(';q=', trim($accept));
             $type = $parts[0];
             $quality = isset($parts[1]) ? floatval($parts[1]) : 1;
-            $tmp_accept_list[] = array('type' => $type, 'quality' => $quality);
+            $tmp_accept_list[] = ['type' => $type, 'quality' => $quality];
         }
 
         // Attention: $acceptList has to be decorated since all PHP sorting functions aren't stable
         // for more information a deeper explamentation of the issue, have a look here:
         // @see http://stackoverflow.com/questions/17364127/reference-all-basic-ways-to-sort-arrays-and-data-in-php/17365409#17365409
         array_walk($tmp_accept_list, function (&$element, $index) {
-            $element = array($element, $index); // decorate
+            $element = [$element, $index]; // decorate
         });
         usort($tmp_accept_list, function ($a, $b) {
             // $a[0] and $b[0] contain the primary sort key
@@ -58,7 +57,7 @@ class Utilities
             $element = $element[0];
         });
 
-        $output = array();
+        $output = [];
         foreach ($tmp_accept_list as $accept_entry) {
             $type = $accept_entry['type'];
             $quality = $accept_entry['quality'];
@@ -113,7 +112,7 @@ class Utilities
             */
             $self_name = 'self::' . __FUNCTION__;
 
-            return (object)array_map($self_name, $data);
+            return (object) array_map($self_name, $data);
         } else {
             // Return object
             return $data;
@@ -177,7 +176,7 @@ class Utilities
         $reflection_method = $reflection_class->getMethod($method);
         $reflection_parameters = $reflection_method->getParameters();
 
-        $positions = array();
+        $positions = [];
 
         /** @var ReflectionParameter $parameter */
         foreach ($reflection_parameters as $parameter) {

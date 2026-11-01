@@ -1,33 +1,31 @@
 <?php
 
-
 namespace JK\RestServer\Tests;
 
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use JK\RestServer\Utilities;
 use stdClass;
 
 class TestClass
 {
-    public function method($param1, stdClass $param2)
-    {
-    }
+    public function method($param1, stdClass $param2) {}
 }
 
 /**
  * Class UtilitiesTest
- * @package JK\RestServer\Tests
- * @covers JK\RestServer\Utilities
  */
-class UtilitiesTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(Utilities::class)]
+class UtilitiesTest extends TestCase
 {
-
     public function testSortByPriority()
     {
         $accept_language_str = 'de_DE;q=0.75,de;q=.6,en;q=.2';
 
         $result = Utilities::sortByPriority($accept_language_str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
 
         $this->assertArrayHasKey('de', $result);
         $this->assertArrayHasKey('de_de', $result);
@@ -45,25 +43,22 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    /**
-     * @group regression
-     */
+    #[Group('regression')]
     public function testSortByPriorityWithEqualValuesAndReverseLexigraphicalOrder()
     {
         $accept_str = 'a,x';
 
         $result = Utilities::sortByPriority($accept_str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
 
-        $results = array();
+        $results = [];
         foreach ($result as $type => $quality) {
             $results[] = $type;
         }
 
         $this->assertEquals('a', $results[0], 'First element should be a, but is: ' . $results[0]);
         $this->assertEquals('x', $results[1], 'Last element should be x, but is: ' . $results[1]);
-
 
     }
 
@@ -73,7 +68,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $result = Utilities::sortByPriority($accept_language_str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertArrayHasKey('de', $result);
         $this->assertEquals(1, $result['de']);
     }
@@ -84,7 +79,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $result = Utilities::sortByPriority($accept_language_str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertArrayHasKey('de', $result);
         $this->assertEquals(0.75, $result['de']);
     }
@@ -95,7 +90,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $result = Utilities::sortByPriority($str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertArrayHasKey('de', $result);
         $this->assertArrayHasKey('en', $result);
         $this->assertEquals(1, $result['de']);
@@ -108,7 +103,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $result = Utilities::sortByPriority($str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertCount(0, $result, 'An empty header value should lead to an empty result array');
     }
 
@@ -118,7 +113,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $result = Utilities::sortByPriority($str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertArrayHasKey('*', $result);
         $this->assertEquals(1, $result['*']);
     }
@@ -129,7 +124,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $result = Utilities::sortByPriority($str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertArrayHasKey('de', $result);
         $this->assertArrayHasKey('*', $result);
         $this->assertEquals(1, $result['de']);
@@ -142,7 +137,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
         $result = Utilities::sortByPriority($str);
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertArrayHasKey('de-de', $result);
         $this->assertArrayHasKey('de', $result);
         $this->assertArrayHasKey('en-us', $result);
@@ -155,43 +150,43 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
     public function testSimpleArrayToObject()
     {
-        $array = array(
-            'key1' => 'value1'
-        );
+        $array = [
+            'key1' => 'value1',
+        ];
 
         $object = Utilities::arrayToObject($array);
 
-        $this->assertObjectHasAttribute('key1', $object);
+        $this->assertObjectHasProperty('key1', $object);
         $this->assertEquals('value1', $object->key1);
     }
 
     public function testTwoElementArrayToObject()
     {
-        $array = array(
+        $array = [
             'key1' => 'value1',
-            'key2' => 'value2'
-        );
+            'key2' => 'value2',
+        ];
 
         $object = Utilities::arrayToObject($array);
 
-        $this->assertObjectHasAttribute('key1', $object);
+        $this->assertObjectHasProperty('key1', $object);
         $this->assertEquals('value1', $object->key1);
-        $this->assertObjectHasAttribute('key2', $object);
+        $this->assertObjectHasProperty('key2', $object);
         $this->assertEquals('value2', $object->key2);
     }
 
     public function testNestedArrayToObject()
     {
-        $array = array(
-            'key1' => array(
-                'key2' => 'value'
-            )
-        );
+        $array = [
+            'key1' => [
+                'key2' => 'value',
+            ],
+        ];
 
         $object = Utilities::arrayToObject($array);
 
-        $this->assertObjectHasAttribute('key1', $object);
-        $this->assertObjectHasAttribute('key2', $object->key1);
+        $this->assertObjectHasProperty('key1', $object);
+        $this->assertObjectHasProperty('key2', $object->key1);
         $this->assertEquals('value', $object->key1->key2);
     }
 
@@ -235,7 +230,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
     public function testArrayToXmlWithEmptyArray()
     {
-        $array = array();
+        $array = [];
 
         $xml = Utilities::arrayToXml($array);
 
@@ -244,19 +239,19 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
     protected function parseXmlString($xml)
     {
-        $tmp  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-        $tmp .= "<result>".$xml.'</result>';
+        $tmp  = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+        $tmp .= "<result>" . $xml . '</result>';
         return simplexml_load_string($tmp);
     }
 
     public function testArrayToXmlWithStringArray()
     {
-        $array = array('one', 'two');
+        $array = ['one', 'two'];
 
         $xml = Utilities::arrayToXml($array);
         $obj = $this->parseXmlString($xml);
 
-        $this->assertObjectHasAttribute('item', $obj);
+        $this->assertObjectHasProperty('item', $obj);
         $this->assertEquals(2, count($obj->item)); // can't use assertCount here, since it's not an array
         $this->assertEquals($array[0], $obj->item[0]);
         $this->assertEquals($array[1], $obj->item[1]);
@@ -264,19 +259,19 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
 
     public function testArrayToXmlWithNestedArray()
     {
-        $array = array(
+        $array = [
             'key1' => 'value1',
-            'key2' => array(
-                'key3' => 'value2'
-            )
-        );
+            'key2' => [
+                'key3' => 'value2',
+            ],
+        ];
 
         $xml = Utilities::arrayToXml($array);
         $obj = $this->parseXmlString($xml);
 
-        $this->assertObjectHasAttribute('key1', $obj);
-        $this->assertObjectHasAttribute('key2', $obj);
-        $this->assertObjectHasAttribute('key3', $obj->key2);
+        $this->assertObjectHasProperty('key1', $obj);
+        $this->assertObjectHasProperty('key2', $obj);
+        $this->assertObjectHasProperty('key3', $obj->key2);
 
         $this->assertEquals($array['key1'], $obj->key1);
         $this->assertEquals($array['key2']['key3'], $obj->key2->key3);
@@ -305,7 +300,7 @@ class UtilitiesTest extends \PHPUnit_Framework_TestCase
         $test_class = new TestClass();
         $result = Utilities::getPositionsOfParameterWithTypeHint($test_class, 'method', 'stdClass');
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertArrayHasKey('param2', $result);
         $this->assertEquals(1, $result['param2']);
     }

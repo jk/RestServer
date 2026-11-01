@@ -1,4 +1,5 @@
 <?php
+
 namespace JK\RestServer;
 
 /**
@@ -65,12 +66,12 @@ class Language
 
     private function negotiateLanguages()
     {
-        $negotiated_langauges = array();
+        $negotiated_langauges = [];
 
         foreach ($this->getClientAcceptedLanguages() as $language => $quality) {
             foreach ($this->supported_langauges as $supported) {
                 if (strcasecmp($supported, $language) == 0) {
-                    $negotiated_langauges[] = array($language, $quality);
+                    $negotiated_langauges[] = [$language, $quality];
                 }
             }
         }
@@ -84,7 +85,7 @@ class Language
     public function getClientAcceptedLanguages()
     {
         if ($this->client_accepted_languages === null) {
-            return array();
+            return [];
         }
 
         return $this->client_accepted_languages;

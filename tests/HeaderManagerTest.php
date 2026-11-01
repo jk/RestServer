@@ -1,39 +1,31 @@
 <?php
 
-namespace JK\RestServer\Tests\JK\RestServer\Tests;
+namespace JK\RestServer\Tests;
 
-
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use JK\RestServer\HeaderManager;
 
 /**
  * Class HeaderManagerTest
- * @package JK\RestServer\Tests\JK\RestServer\Tests
- * @coversDefaultClass \JK\RestServer\HeaderManager
  */
-class HeaderManagerTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(HeaderManager::class)]
+class HeaderManagerTest extends TestCase
 {
     /** @var HeaderManager Header manager system under test */
     protected $sut;
 
-    /**
-     * @coversNothing
-     */
-    public function setUp()
+    protected function setUp(): void
     {
         $this->sut = new HeaderManager();
     }
 
-    /**
-     * @coversNothing
-     */
-    public function tearDown()
+    protected function tearDown(): void
     {
         unset($this->sut);
     }
 
-    /**
-     * @covers ::addHeader()
-     */
     public function testAddHeader()
     {
         $name = 'Content-Type';
@@ -45,9 +37,6 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($value, $result);
     }
 
-    /**
-     * @covers ::getHeader()
-     */
     public function testGetHeaderForAlreadyAddedHeader()
     {
         $name = 'Content-Type';
@@ -59,9 +48,6 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($value, $result);
     }
 
-    /**
-     * @covers ::getHeader()
-     */
     public function testGetHeaderNonExistingHeader()
     {
         $result = $this->sut->getHeader('non-existing');
@@ -69,24 +55,18 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @covers ::addHeaders()
-     */
     public function testAddHeaders()
     {
-        $headers = array(
+        $headers = [
             'Header1' => 'Value1',
-            'Header2' => 'Value2'
-        );
+            'Header2' => 'Value2',
+        ];
         $this->sut->addHeaders($headers);
 
         $this->assertEquals($this->sut->getHeader('Header1'), $headers['Header1']);
         $this->assertEquals($this->sut->getHeader('Header2'), $headers['Header2']);
     }
 
-    /**
-     * @covers ::setStatusHeader()
-     */
     public function testSetStatusHeader()
     {
         $this->sut->setStatusHeader('404 Not Found', 'HTTP/2');
@@ -94,9 +74,6 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('HTTP/2 404 Not Found', $this->sut->getStatusHeader());
     }
 
-    /**
-     * @covers ::setStatusHeader()
-     */
     public function testSetStatusHeaderWithoutProtocol()
     {
         $this->sut->setStatusHeader('404 Not Found');
@@ -104,19 +81,11 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('HTTP/1.1 404 Not Found', $this->sut->getStatusHeader());
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::getStatusHeader()
-     */
     public function testGetStatusHeaderDefaultValue()
     {
         $this->assertEquals('HTTP/1.1 200 OK', $this->sut->getStatusHeader());
     }
 
-    /**
-     * @covers ::__construct()
-     * @covers ::setStatusHeader()
-     */
     public function testSetStatusHeaderDefaultValueViaServerProtocol()
     {
         $_SERVER['SERVER_PROTOCOL'] = 'HTTP/2';
@@ -125,9 +94,6 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('HTTP/2 200 OK', $header_manager->getStatusHeader());
     }
 
-    /**
-     * @covers ::headerExists()
-     */
     public function testHeaderExists()
     {
         $name = 'Content-Type';
@@ -139,9 +105,6 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @covers ::removeHeader()
-     */
     public function testRemoveHeader()
     {
         $name = 'Content-Type';
@@ -155,10 +118,7 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->sut->headerExists($name));
     }
 
-    /**
-     * @runInSeparateProcess
-     * @covers ::sendAllHeaders()
-     */
+    #[RunInSeparateProcess]
     public function testSendAllHeaders()
     {
         if (!extension_loaded('xdebug')) {
@@ -167,14 +127,12 @@ class HeaderManagerTest extends \PHPUnit_Framework_TestCase
 
         $this->sut->addHeader('Content-Type', 'application/json');
 
-
         $this->sut->setStatusHeader('404 Not Found');
 
         $this->sut->sendAllHeaders();
 
         // BC: http_response_code() only exists in PHP 5.4+
-        if (function_exists('http_response_code'))
-        {
+        if (function_exists('http_response_code')) {
             $this->assertEquals(404, http_response_code());
         }
 

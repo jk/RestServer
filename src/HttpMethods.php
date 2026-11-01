@@ -1,4 +1,5 @@
 <?php
+
 namespace JK\RestServer;
 
 use ReflectionClass;
@@ -34,7 +35,7 @@ class HttpMethods
      *
      * See section 15.1.3 for security considerations when used for forms.
      */
-    const GET = 'GET';
+    public const GET = 'GET';
 
     /**
      * The POST method is used to request that the origin server accept the entity enclosed in the request as a new
@@ -67,7 +68,7 @@ class HttpMethods
      *
      * See section 15.1.3 for security considerations.
      */
-    const POST = 'POST';
+    public const POST = 'POST';
 
     /**
      * The PUT method requests that the enclosed entity be stored under the supplied Request-URI. If the Request-URI
@@ -105,7 +106,7 @@ class HttpMethods
      * Unless otherwise specified for a particular entity-header, the entity-headers in the PUT request SHOULD be
      * applied to the resource created or modified by the PUT.
      */
-    const PUT = 'PUT';
+    public const PUT = 'PUT';
 
     /**
      * The DELETE method requests that the origin server delete the resource identified by the Request-URI. This method
@@ -121,7 +122,7 @@ class HttpMethods
      * If the request passes through a cache and the Request-URI identifies one or more currently cached entities, those
      * entries SHOULD be treated as stale. Responses to this method are not cacheable.
      */
-    const DELETE = 'DELETE';
+    public const DELETE = 'DELETE';
 
     /**
      * The HEAD method is identical to GET except that the server MUST NOT return a message-body in the response. The
@@ -135,7 +136,7 @@ class HttpMethods
      * entity differs from the current entity (as would be indicated by a change in Content-Length, Content-MD5, ETag or
      * Last-Modified), then the cache MUST treat the cache entry as stale.
      */
-    const HEAD = 'HEAD';
+    public const HEAD = 'HEAD';
 
     /**
      * The OPTIONS method represents a request for information about the communication options available on the
@@ -174,7 +175,7 @@ class HttpMethods
      * integer greater than zero, the proxy MUST decrement the field-value when it forwards the request. If no
      * Max-Forwards field is present in the request, then the forwarded request MUST NOT include a Max-Forwards field.
      */
-    const OPTIONS = 'OPTIONS';
+    public const OPTIONS = 'OPTIONS';
 
     /**
      * The TRACE method is used to invoke a remote, application-layer loop- back of the request message. The final
@@ -193,13 +194,13 @@ class HttpMethods
      * If the request is valid, the response SHOULD contain the entire request message in the entity-body, with a
      * Content-Type of "message/http". Responses to this method MUST NOT be cached.
      */
-    const TRACE = 'TRACE';
+    public const TRACE = 'TRACE';
 
     /**
      * This specification reserves the method name CONNECT for use with a proxy that can dynamically switch to being a
      * tunnel (e.g. SSL tunneling [44]).
      */
-    const CONNECT = 'CONNECT';
+    public const CONNECT = 'CONNECT';
 
     /**
      * A new method is necessary to improve interoperability and prevent errors.  The PUT method is already defined to
@@ -208,7 +209,7 @@ class HttpMethods
      * but without broad interoperability (for one, there is no standard way to discover patch format support).  PATCH
      * was mentioned in earlier HTTP specifications, but not completely defined.
      */
-    const PATCH = 'PATCH';
+    public const PATCH = 'PATCH';
 
     /**
      * Get all HTTP methods
@@ -229,10 +230,10 @@ class HttpMethods
      */
     public static function getMethodsWhereRequestBodyIsAllowed()
     {
-        return array(
+        return [
             self::POST,
             self::PUT,
-            self::PATCH
-        );
+            self::PATCH,
+        ];
     }
 }

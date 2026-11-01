@@ -1,18 +1,17 @@
 <?php
+
 namespace JK\RestServer\Tests;
 
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use JK\RestServer\Format;
 
 /**
  * Class FormatTest
- * @package JK\RestServer\Tests
- * @covers JK\RestServer\Format
  */
-class FormatTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(Format::class)]
+class FormatTest extends TestCase
 {
-    /**
-     * @covers JK\RestServer\Format::getMimeTypeFromFormatAbbreviation
-     */
     public function testGetMimeTypeFromFormatAbbreviation()
     {
         $result = Format::getMimeTypeFromFormatAbbreviation('json');
@@ -20,9 +19,6 @@ class FormatTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Format::JSON, $result);
     }
 
-    /**
-     * @covers JK\RestServer\Format::getMimeTypeFromFormatAbbreviation
-     */
     public function testGetMimeTypeFromFormatNonExistentAbbreviation()
     {
         $result = Format::getMimeTypeFromFormatAbbreviation('non-existent');
@@ -30,9 +26,6 @@ class FormatTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($result);
     }
 
-    /**
-     * @covers JK\RestServer\Format::isMimeTypeSupported
-     */
     public function testIsMimeTypeSupported()
     {
         $result = Format::isMimeTypeSupported('application/json');
@@ -40,9 +33,6 @@ class FormatTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @covers JK\RestServer\Format::isMimeTypeSupported
-     */
     public function testIsMimeTypeNotSupported()
     {
         $result = Format::isMimeTypeSupported('non/existent');
