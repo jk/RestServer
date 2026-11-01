@@ -6,3 +6,4 @@
 /.php-cs-fixer.dist.php export-ignore
 /phpunit.xml export-ignore
 /README.md export-ignore
+/.codacy.yml export-ignore
