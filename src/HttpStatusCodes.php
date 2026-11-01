@@ -11,88 +11,88 @@ final class HttpStatusCodes
 {
     // 1xx: Informational - Request received, continuing process
     /** Continue */
-    const CONT = 100;
+    public const CONT = 100;
     /** Switching Protocols */
-    const SWITCHING_PROTOCOLS = 101;
+    public const SWITCHING_PROTOCOLS = 101;
     /** Processing */
-    const PROCESSING = 102;
+    public const PROCESSING = 102;
 
     // 2xx: Success - The action was successfully received, understood, and accepted
     /** OK */
-    const OK = 200;
+    public const OK = 200;
     /** Created */
-    const CREATED = 201;
+    public const CREATED = 201;
     /** Accepted */
-    const ACCEPTED = 202;
+    public const ACCEPTED = 202;
     /** Non-Authoritative Information */
-    const NON_AUTHORITATIVE_INFORMATION = 203;
+    public const NON_AUTHORITATIVE_INFORMATION = 203;
     /** No Content */
-    const NO_CONTENT = 204;
+    public const NO_CONTENT = 204;
     /** Reset Content */
-    const RESET_CONTENT = 205;
+    public const RESET_CONTENT = 205;
     /** Partial Content */
-    const PARTIAL_CONTENT = 206;
+    public const PARTIAL_CONTENT = 206;
 
     // 3xx: Redirection - Further action must be taken in order to complete the request
     /** Multiple Choices */
-    const MULTIPLE_CHOICES = 300;
+    public const MULTIPLE_CHOICES = 300;
     /** Moved Permanently */
-    const MOVED_PERMANENTLY = 301;
+    public const MOVED_PERMANENTLY = 301;
     /** Found */
-    const FOUND = 302;
+    public const FOUND = 302;
     /** See Other */
-    const SEE_OTHER = 303;
+    public const SEE_OTHER = 303;
     /** Not Modified */
-    const NOT_MODIFIED = 304;
+    public const NOT_MODIFIED = 304;
     /** Use Proxy */
-    const USE_PROXY = 305;
+    public const USE_PROXY = 305;
     /** Temporary Redirect */
-    const TEMPORARY_REDIRECT = 307;
+    public const TEMPORARY_REDIRECT = 307;
 
     // 4xx: Client Error - The request contains bad syntax or cannot be fulfilled
     /** Bad Request */
-    const BAD_REQUEST = 400;
+    public const BAD_REQUEST = 400;
     /** Unauthorized */
-    const UNAUTHORIZED = 401;
+    public const UNAUTHORIZED = 401;
     /** Payment Required */
-    const PAYMENT_REQUIRED = 402;
+    public const PAYMENT_REQUIRED = 402;
     /** Forbidden */
-    const FORBIDDEN = 403;
+    public const FORBIDDEN = 403;
     /** Not Found */
-    const NOT_FOUND = 404;
+    public const NOT_FOUND = 404;
     /** Method Not Alloews */
-    const METHOD_NOT_ALLOWED = 405;
+    public const METHOD_NOT_ALLOWED = 405;
     /** Not Acceptable */
-    const NOT_ACCEPTABLE = 406;
+    public const NOT_ACCEPTABLE = 406;
     /** Conflict */
-    const CONFLICT = 409;
+    public const CONFLICT = 409;
     /** Gone */
-    const GONE = 410;
+    public const GONE = 410;
     /** Length Required */
-    const LENGTH_REQUIRED = 411;
+    public const LENGTH_REQUIRED = 411;
     /**  Precondition Failed */
-    const PRECONDITION_FAILED = 412;
+    public const PRECONDITION_FAILED = 412;
     /** Request Entity Too Large */
-    const REQUEST_ENTITY_TOO_LARGE = 413;
+    public const REQUEST_ENTITY_TOO_LARGE = 413;
     /** Request Uri Too Long */
-    const REQUEST_URI_TOO_LONG = 414;
+    public const REQUEST_URI_TOO_LONG = 414;
     /** Unsupported Media Type */
-    const UNSUPPORTED_MEDIA_TYPE = 415;
+    public const UNSUPPORTED_MEDIA_TYPE = 415;
     /** Requested Range Not Satisfiable */
-    const REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+    public const REQUESTED_RANGE_NOT_SATISFIABLE = 416;
     /** Expectation Failed   */
-    const EXPECTATION_FAILED = 417;
+    public const EXPECTATION_FAILED = 417;
 
     // 5xx: Server Error - The server failed to fulfill an apparently valid request
     /** Internal Server Error */
-    const INTERNAL_SERVER_ERROR = 500;
+    public const INTERNAL_SERVER_ERROR = 500;
     /** Not Implemented */
-    const NOT_IMPLEMENTED = 501;
+    public const NOT_IMPLEMENTED = 501;
     /** Service Unavailable */
-    const SERVICE_UNAVAILABLE = 503;
+    public const SERVICE_UNAVAILABLE = 503;
 
     /** @var array Maps status codes to its string representation */
-    protected static $codes_to_string_map = array(
+    protected static $codes_to_string_map = [
         self::CONT => 'Continue',
         self::OK => 'OK',
         self::CREATED => 'Created',
@@ -127,7 +127,7 @@ final class HttpStatusCodes
         self::INTERNAL_SERVER_ERROR => 'Internal Server Error',
         self::NOT_IMPLEMENTED => 'Not Implemented',
         self::SERVICE_UNAVAILABLE => 'Service Unavailable',
-    );
+    ];
 
     public function __construct()
     {

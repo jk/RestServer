@@ -57,10 +57,10 @@ class HeaderManagerTest extends TestCase
 
     public function testAddHeaders()
     {
-        $headers = array(
+        $headers = [
             'Header1' => 'Value1',
-            'Header2' => 'Value2'
-        );
+            'Header2' => 'Value2',
+        ];
         $this->sut->addHeaders($headers);
 
         $this->assertEquals($this->sut->getHeader('Header1'), $headers['Header1']);
@@ -132,8 +132,7 @@ class HeaderManagerTest extends TestCase
         $this->sut->sendAllHeaders();
 
         // BC: http_response_code() only exists in PHP 5.4+
-        if (function_exists('http_response_code'))
-        {
+        if (function_exists('http_response_code')) {
             $this->assertEquals(404, http_response_code());
         }
 

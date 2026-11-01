@@ -26,8 +26,7 @@ class RestExceptionTest extends TestCase
         $message = 'Something went wrong';
         try {
             throw new RestException($code, $message);
-        }
-        catch (RestException $e) {
+        } catch (RestException $e) {
             $this->assertEquals($code, $e->getCode());
             $this->assertEquals($message, $e->getMessage());
             return;

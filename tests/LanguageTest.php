@@ -12,8 +12,7 @@ use JK\RestServer\Language;
 #[CoversClass(Language::class)]
 class LanguageTest extends TestCase
 {
-
-    protected $supported_languages = array('en', 'de');
+    protected $supported_languages = ['en', 'de'];
     protected $default_language = 'en';
 
     protected $safari_accept_language = 'de-de';
@@ -31,7 +30,7 @@ class LanguageTest extends TestCase
 
     public function testGetPreferedLanguageWithAnyMatches()
     {
-        $supported_languages = array();
+        $supported_languages = [];
         $default_langauge = 'fr';
         $accepted_languages_string = 'de';
         $language = new Language($supported_languages, $default_langauge, $accepted_languages_string);
@@ -44,7 +43,7 @@ class LanguageTest extends TestCase
 
     public function testGetDefaultLanguage()
     {
-        $supported_languages = array();
+        $supported_languages = [];
         $default_langauge = 'de';
         $accepted_languages_string = '';
         $language = new Language($supported_languages, $default_langauge, $accepted_languages_string);
@@ -57,7 +56,7 @@ class LanguageTest extends TestCase
 
     public function testGetSupportedLanguages()
     {
-        $supported_languages = array('de-de', 'de', 'en');
+        $supported_languages = ['de-de', 'de', 'en'];
         $default_langauge = 'de';
         $accepted_languages_string = '';
         $language = new Language($supported_languages, $default_langauge, $accepted_languages_string);
@@ -74,7 +73,7 @@ class LanguageTest extends TestCase
 
     public function testGetClientAcceptedLanguages()
     {
-        $supported_languages = array();
+        $supported_languages = [];
         $default_langauge = 'de';
         $accepted_languages_string = 'fr,en';
         $language = new Language($supported_languages, $default_langauge, $accepted_languages_string);
@@ -89,7 +88,7 @@ class LanguageTest extends TestCase
 
     public function testGetClientAcceptedLanguagesWithEmptyString()
     {
-        $supported_languages = array();
+        $supported_languages = [];
         $default_langauge = 'de';
         $accepted_languages_string = null;
         $language = new Language($supported_languages, $default_langauge, $accepted_languages_string);

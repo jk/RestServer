@@ -1,4 +1,5 @@
 <?php
+
 namespace JK\RestServer\Tests;
 
 use PHPUnit\Framework\TestCase;

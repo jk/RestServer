@@ -1,4 +1,5 @@
 <?php
+
 namespace JK\RestServer\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -15,7 +16,7 @@ class HttpMethodsTest extends TestCase
     {
         $result = HttpMethods::getAllMethods();
 
-        $http_methods_expected = array(
+        $http_methods_expected = [
             HttpMethods::GET,
             HttpMethods::POST,
             HttpMethods::PUT,
@@ -23,12 +24,15 @@ class HttpMethodsTest extends TestCase
             HttpMethods::HEAD,
             HttpMethods::OPTIONS,
             HttpMethods::TRACE,
-            HttpMethods::CONNECT
-        );
+            HttpMethods::CONNECT,
+        ];
 
         foreach ($http_methods_expected as $http_method_expected) {
-            $this->assertContains($http_method_expected, $result,
-                'HTTP method ' . $http_method_expected . ' is not present in getAllMethods()');
+            $this->assertContains(
+                $http_method_expected,
+                $result,
+                'HTTP method ' . $http_method_expected . ' is not present in getAllMethods()',
+            );
         }
     }
 
@@ -36,14 +40,17 @@ class HttpMethodsTest extends TestCase
     {
         $result = HttpMethods::getMethodsWhereRequestBodyIsAllowed();
 
-        $http_methods_expected = array(
+        $http_methods_expected = [
             HttpMethods::POST,
-            HttpMethods::PUT
-        );
+            HttpMethods::PUT,
+        ];
 
         foreach ($http_methods_expected as $http_method_expected) {
-            $this->assertContains($http_method_expected, $result,
-                'HTTP method ' . $http_method_expected . ' is not present in getAllMethods()');
+            $this->assertContains(
+                $http_method_expected,
+                $result,
+                'HTTP method ' . $http_method_expected . ' is not present in getAllMethods()',
+            );
         }
     }
 }

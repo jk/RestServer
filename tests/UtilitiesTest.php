@@ -10,9 +10,7 @@ use stdClass;
 
 class TestClass
 {
-    public function method($param1, stdClass $param2)
-    {
-    }
+    public function method($param1, stdClass $param2) {}
 }
 
 /**
@@ -21,7 +19,6 @@ class TestClass
 #[CoversClass(Utilities::class)]
 class UtilitiesTest extends TestCase
 {
-
     public function testSortByPriority()
     {
         $accept_language_str = 'de_DE;q=0.75,de;q=.6,en;q=.2';
@@ -55,7 +52,7 @@ class UtilitiesTest extends TestCase
 
         $this->assertIsArray($result);
 
-        $results = array();
+        $results = [];
         foreach ($result as $type => $quality) {
             $results[] = $type;
         }
@@ -153,9 +150,9 @@ class UtilitiesTest extends TestCase
 
     public function testSimpleArrayToObject()
     {
-        $array = array(
-            'key1' => 'value1'
-        );
+        $array = [
+            'key1' => 'value1',
+        ];
 
         $object = Utilities::arrayToObject($array);
 
@@ -165,10 +162,10 @@ class UtilitiesTest extends TestCase
 
     public function testTwoElementArrayToObject()
     {
-        $array = array(
+        $array = [
             'key1' => 'value1',
-            'key2' => 'value2'
-        );
+            'key2' => 'value2',
+        ];
 
         $object = Utilities::arrayToObject($array);
 
@@ -180,11 +177,11 @@ class UtilitiesTest extends TestCase
 
     public function testNestedArrayToObject()
     {
-        $array = array(
-            'key1' => array(
-                'key2' => 'value'
-            )
-        );
+        $array = [
+            'key1' => [
+                'key2' => 'value',
+            ],
+        ];
 
         $object = Utilities::arrayToObject($array);
 
@@ -233,7 +230,7 @@ class UtilitiesTest extends TestCase
 
     public function testArrayToXmlWithEmptyArray()
     {
-        $array = array();
+        $array = [];
 
         $xml = Utilities::arrayToXml($array);
 
@@ -242,14 +239,14 @@ class UtilitiesTest extends TestCase
 
     protected function parseXmlString($xml)
     {
-        $tmp  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-        $tmp .= "<result>".$xml.'</result>';
+        $tmp  = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+        $tmp .= "<result>" . $xml . '</result>';
         return simplexml_load_string($tmp);
     }
 
     public function testArrayToXmlWithStringArray()
     {
-        $array = array('one', 'two');
+        $array = ['one', 'two'];
 
         $xml = Utilities::arrayToXml($array);
         $obj = $this->parseXmlString($xml);
@@ -262,12 +259,12 @@ class UtilitiesTest extends TestCase
 
     public function testArrayToXmlWithNestedArray()
     {
-        $array = array(
+        $array = [
             'key1' => 'value1',
-            'key2' => array(
-                'key3' => 'value2'
-            )
-        );
+            'key2' => [
+                'key3' => 'value2',
+            ],
+        ];
 
         $xml = Utilities::arrayToXml($array);
         $obj = $this->parseXmlString($xml);

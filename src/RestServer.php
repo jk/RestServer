@@ -1,4 +1,5 @@
 <?php
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (c) 2009 Jacob Wright
@@ -48,12 +49,12 @@ class RestServer
     public $mode;
     protected $root;
 
-    protected $map = array();
-    protected $errorClasses = array();
+    protected $map = [];
+    protected $errorClasses = [];
     protected $cached;
     protected $data;
     /** @var array Supported Languages */
-    protected $supported_languages = array();
+    protected $supported_languages = [];
     /** @var string Default Language */
     protected $default_language = 'en';
     /** @var string Default Format */
@@ -64,14 +65,14 @@ class RestServer
     /** @var HeaderManager Header manager */
     public $header_manager;
     /** @var array CORS allowed origins */
-    protected $cors_allowed_origin = array('*');
+    protected $cors_allowed_origin = ['*'];
     /** @var array CORS allowed custom headers */
-    protected $cors_allowed_headers = array(
+    protected $cors_allowed_headers = [
         'accept-language',
         'accept-encoding',
         'accept',
-        'content-type'
-    );
+        'content-type',
+    ];
     /** @var int CORS how long should a client cache the CORS preflight */
     protected $cors_max_age = 1728000;
 
@@ -83,7 +84,7 @@ class RestServer
      */
     public function __construct($mode = Mode::PRODUCTION, $realm = 'Rest Server')
     {
-        if (!in_array($mode, array(Mode::PRODUCTION, Mode::DEBUG))) {
+        if (!in_array($mode, [Mode::PRODUCTION, Mode::DEBUG])) {
             $mode = Mode::PRODUCTION;
         }
 
@@ -93,7 +94,7 @@ class RestServer
         $this->apcCacheSuffix = crc32(__DIR__);
 
         if (php_sapi_name() !== 'cli') {
-            $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']).DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
+            $this->root = ltrim(dirname($_SERVER['SCRIPT_NAME']) . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR);
         } else {
             $this->root = '/';
         }
@@ -112,16 +113,16 @@ class RestServer
     {
         if ($this->mode == Mode::PRODUCTION && !$this->cached) {
             if (function_exists('apc_store')) {
-                apc_store('urlMap_'.$this->apcCacheSuffix, $this->map);
+                apc_store('urlMap_' . $this->apcCacheSuffix, $this->map);
             } else {
-                file_put_contents($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache', serialize($this->map));
+                file_put_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache', serialize($this->map));
             }
         }
     }
 
     public function refreshCache()
     {
-        $this->map = array();
+        $this->map = [];
         $this->cached = false;
     }
 
@@ -191,11 +192,11 @@ class RestServer
                 $language = new Language(
                     $this->supported_languages,
                     $this->default_language,
-                    $accept_language_header
+                    $accept_language_header,
                 );
                 $params = $this->injectLanguageIntoMethodParameters($language, $obj, $method, $params);
 
-                $result = call_user_func_array(array($obj, $method), $params);
+                $result = call_user_func_array([$obj, $method], $params);
 
                 $this->automaticContentLanguageHeaderDispatch($language);
 
@@ -224,7 +225,7 @@ class RestServer
     protected function handleCorsPreflightRequest()
     {
         // Automatic CORS preflight response
-        $existing_verbs = array();
+        $existing_verbs = [];
         foreach (HttpMethods::getAllMethods() as $http_verb) {
             if (isset($this->map[$http_verb])) {
                 $urls = $this->map[$http_verb];
@@ -257,8 +258,10 @@ class RestServer
         $this->header_manager->addHeader('Access-Control-Allow-Methods', join($comma_devider, $existing_verbs));
         $this->header_manager->addHeader('Access-Control-Max-Age', intval($this->cors_max_age));
         if (count($this->cors_allowed_headers) > 0) {
-            $this->header_manager->addHeader('Access-Control-Allow-Headers',
-                join($comma_devider, $this->cors_allowed_headers));
+            $this->header_manager->addHeader(
+                'Access-Control-Allow-Headers',
+                join($comma_devider, $this->cors_allowed_headers),
+            );
         }
 
         $this->sendData('');
@@ -323,12 +326,12 @@ class RestServer
             $message = $description;
         }
 
-        $output = array(
-            'error' => array(
+        $output = [
+            'error' => [
                 'code' => $status_code,
-                'message' => $message
-            )
-        );
+                'message' => $message,
+            ],
+        ];
 
         $this->setStatus($status_code);
         $this->sendData($output);
@@ -344,9 +347,9 @@ class RestServer
 
         if ($this->mode == Mode::PRODUCTION) {
             if (function_exists('apc_fetch')) {
-                $map = apc_fetch('urlMap_'.$this->apcCacheSuffix);
-            } elseif (file_exists($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache')) {
-                $map = unserialize(file_get_contents($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache'));
+                $map = apc_fetch('urlMap_' . $this->apcCacheSuffix);
+            } elseif (file_exists($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache')) {
+                $map = unserialize(file_get_contents($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache'));
             }
             if (isset($map) && is_array($map)) {
                 $this->map = $map;
@@ -354,9 +357,9 @@ class RestServer
             }
         } else {
             if (function_exists('apc_delete')) {
-                apc_delete('urlMap_'.$this->apcCacheSuffix);
+                apc_delete('urlMap_' . $this->apcCacheSuffix);
             } else {
-                @unlink($this->cacheDir.DIRECTORY_SEPARATOR.'urlMap.cache');
+                @unlink($this->cacheDir . DIRECTORY_SEPARATOR . 'urlMap.cache');
             }
         }
     }
@@ -367,8 +370,7 @@ class RestServer
             return null;
         }
 
-        if (isset($this->map[$this->getMethod()]))
-        {
+        if (isset($this->map[$this->getMethod()])) {
             $urls = $this->map[$this->getMethod()];
         } else {
             return null;
@@ -401,7 +403,7 @@ class RestServer
         if (isset($reflection)) {
             $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
         } else {
-            $methods = array();
+            $methods = [];
         }
 
         /** @var ReflectionMethod $method */
@@ -409,12 +411,12 @@ class RestServer
             $doc = $method->getDocComment();
 
             $all_http_verbs_joined_by_pipes = implode('|', HttpMethods::getAllMethods());
-            if (preg_match_all('/@url[ \t]+('. $all_http_verbs_joined_by_pipes .')[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
+            if (preg_match_all('/@url[ \t]+(' . $all_http_verbs_joined_by_pipes . ')[ \t]+\/?(\S*)/s', $doc, $matches, PREG_SET_ORDER)) {
                 $params = $method->getParameters();
 
                 foreach ($matches as $match) {
                     $httpMethod = $match[1];
-                    $url = $this->root.$basePath.$match[2];
+                    $url = $this->root . $basePath . $match[2];
 
                     // quick fix for running on windows
                     $url = str_replace('\\', '/', $url);
@@ -536,7 +538,7 @@ class RestServer
             $components = preg_split('/\;\s*/', $_SERVER['CONTENT_TYPE']);
             if (in_array('application/x-www-form-urlencoded', $components)) {
                 $a = explode('&', $data);
-                $output = array();
+                $output = [];
                 foreach ($a as $entry) {
                     if (strpos($entry, '=') > 0) {
                         $tmp = explode('=', $entry);
@@ -552,7 +554,7 @@ class RestServer
             } else {
                 throw new RestException(
                     HttpStatusCodes::INTERNAL_SERVER_ERROR,
-                    'Content-Type "'.$_SERVER['CONTENT_TYPE'].'" not supported'
+                    'Content-Type "' . $_SERVER['CONTENT_TYPE'] . '" not supported',
                 );
             }
         } else {
@@ -575,8 +577,8 @@ class RestServer
         $this->header_manager->addHeader('Content-Type', $this->getFormat());
 
         if ($this->getFormat() == Format::XML) {
-            $output  = '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-            $output .= "<result>".Utilities::arrayToXml($data).'</result>';
+            $output  = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+            $output .= "<result>" . Utilities::arrayToXml($data) . '</result>';
             $data = $output;
             unset($output);
         } else {
@@ -584,7 +586,7 @@ class RestServer
 
             if ($this->getFormat() == Format::JSONP) {
                 if (isset($_GET['callback']) && preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $_GET['callback'])) {
-                    $data = $_GET['callback'].'('.$data.')';
+                    $data = $_GET['callback'] . '(' . $data . ')';
                 } else {
                     throw new RestException(HttpStatusCodes::BAD_REQUEST, 'No callback given.');
                 }
@@ -805,7 +807,7 @@ class RestServer
             return $matches;
         }
 
-        return array();
+        return [];
     }
 
     /**
@@ -820,8 +822,8 @@ class RestServer
     {
         $original_method_parameters_with_default_values = $call[2];
 
-        $params = array();
-        $params_from_request_uri = array();
+        $params = [];
+        $params_from_request_uri = [];
         if (isset($original_method_parameters_with_default_values['data'])) {
             $params[$original_method_parameters_with_default_values['data']] = $this->data;
         }

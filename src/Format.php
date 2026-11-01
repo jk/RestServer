@@ -1,4 +1,5 @@
 <?php
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (c) 2009 Jacob Wright
@@ -30,20 +31,20 @@ namespace JK\RestServer;
  */
 final class Format
 {
-    const PLAIN = 'text/plain';
-    const HTML = 'text/html';
-    const JSON = 'application/json';
-    const JSONP = 'application/json-p';
-    const XML = 'application/xml';
+    public const PLAIN = 'text/plain';
+    public const HTML = 'text/html';
+    public const JSON = 'application/json';
+    public const JSONP = 'application/json-p';
+    public const XML = 'application/xml';
 
-    protected static $formats = array(
+    protected static $formats = [
         'plain' => self::PLAIN,
         'txt' => self::PLAIN,
         'html' => self::HTML,
         'json' => self::JSON,
         'jsonp' => self::JSONP,
         'xml' => self::XML,
-    );
+    ];
 
     /**
      * Get the MIME type for a known format abbreviation

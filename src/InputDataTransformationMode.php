@@ -1,12 +1,10 @@
 <?php
 
-
 namespace JK\RestServer;
-
 
 class InputDataTransformationMode
 {
-    const TO_ARRAY = 'to-array';
-    const TO_OBJECT = 'to-object';
-    const NONE = 'none';
+    public const TO_ARRAY = 'to-array';
+    public const TO_OBJECT = 'to-object';
+    public const NONE = 'none';
 }
