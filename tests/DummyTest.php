@@ -1,9 +1,9 @@
 <?php
 
-
 namespace JK\RestServer\Tests;
 
-class DummyTest extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+class DummyTest extends TestCase
 {
 
     public function testTrue()

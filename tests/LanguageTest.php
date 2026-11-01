@@ -1,16 +1,16 @@
 <?php
 
-
 namespace JK\RestServer\Tests;
 
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use JK\RestServer\Language;
 
 /**
  * Class LanguageTest
- * @package JK\RestServer\Tests
- * @covers JK\RestServer\Language
  */
-class LanguageTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(Language::class)]
+class LanguageTest extends TestCase
 {
 
     protected $supported_languages = array('en', 'de');
@@ -25,7 +25,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
 
         $result = $language->getPreferedLanguage();
 
-        $this->assertInternalType('string', $result);
+        $this->assertIsString($result);
         $this->assertEquals('de', $result);
     }
 
@@ -38,7 +38,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
 
         $result = $language->getPreferedLanguage();
 
-        $this->assertInternalType('string', $result);
+        $this->assertIsString($result);
         $this->assertEquals($default_langauge, $result);
     }
 
@@ -51,7 +51,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
 
         $result = $language->getDefaultLanguage();
 
-        $this->assertInternalType('string', $result);
+        $this->assertIsString($result);
         $this->assertEquals($default_langauge, $result);
     }
 
@@ -64,7 +64,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
 
         $result = $language->getSupportedLangauges();
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         for ($i = 0; $i < count($supported_languages); $i++) {
             $expected_language = $supported_languages[$i];
             $actual_language = $result[$i];
@@ -81,7 +81,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
 
         $result = $language->getClientAcceptedLanguages();
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertCount(2, $result);
         $this->assertArrayHasKey('en', $result);
         $this->assertArrayHasKey('fr', $result);
@@ -96,7 +96,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
 
         $result = $language->getClientAcceptedLanguages();
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertCount(0, $result);
     }
 
@@ -106,7 +106,7 @@ class LanguageTest extends \PHPUnit_Framework_TestCase
 
         $result = $language->getNegotiatedLangauges();
 
-        $this->assertInternalType('array', $result);
+        $this->assertIsArray($result);
         $this->assertCount(2, $result);
         $this->assertCount(2, $result[0]);
         $this->assertEquals('de', $result[0][0]);

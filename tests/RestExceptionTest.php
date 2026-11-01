@@ -1,19 +1,22 @@
 <?php
 
-
 namespace JK\RestServer\Tests;
 
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use JK\RestServer\RestException;
 
-class RestExceptionTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(RestException::class)]
+class RestExceptionTest extends TestCase
 {
     /**
      * @throws RestException
-     * @expectedException \JK\RestServer\RestException
-     * @expectedExceptionMessage Something went wrong
      */
     public function testRestException()
     {
+        $this->expectException(RestException::class);
+        $this->expectExceptionMessage('Something went wrong');
+
         throw new RestException(400, 'Something went wrong');
     }
 

@@ -1,19 +1,16 @@
 <?php
-namespace JK\RestServer\Tests\JK\RestServer\Tests;
+namespace JK\RestServer\Tests;
 
-
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use JK\RestServer\HttpMethods;
 
 /**
  * Class HttpMethodsTest
- * @package JK\RestServer\Tests\JK\RestServer\Tests
- * @coversDefaultClass \JK\RestServer\HttpMethods
  */
-class HttpMethodsTest extends \PHPUnit_Framework_TestCase
+#[CoversClass(HttpMethods::class)]
+class HttpMethodsTest extends TestCase
 {
-    /**
-     * @covers ::getAllMethods()
-     */
     public function testGetAllMethods()
     {
         $result = HttpMethods::getAllMethods();
@@ -35,9 +32,6 @@ class HttpMethodsTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    /**
-     * @covers ::getMethodsWhereRequestBodyIsAllowed()
-     */
     public function testGetMethodsWhereRequestBodyIsAllowed()
     {
         $result = HttpMethods::getMethodsWhereRequestBodyIsAllowed();
